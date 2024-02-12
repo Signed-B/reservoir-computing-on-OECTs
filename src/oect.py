@@ -15,23 +15,22 @@ def update_drain_voltage(Vd, Vg, V1, Vdinit, R, Rg, Vp, Kp, W, L):
     delta = 2 * a * (Vdinit + b * (Vg - V1)) + (a * (V1 - Vp) - 1) ** 2
     Vdtemp3 = -(1 / a) + (V1 - Vp) + (1 / a) * np.sqrt(np.maximum(delta, np.zeros(n)))
 
-    # TODO which of the following is correct?
-    # TODO neither of these match the paper as far as I can tell.
+    # TODO 99% correct, check w/ Juan
 
-    # for id in range(n):
-    #     if V1[id] - Vd[id] > Vp[id]:
-    #         Vd[id] = Vdtemp1[id]
-    #     # Cutoff regime
-    #     elif V1[id] > Vp[id] and Vd[id] <= 0:
-    #         Vd[id] = Vdtemp2[id]
-    #     # Linear regime
-    #     else:
-    #         Vd[id] = Vdtemp3[id]
     for id in range(n):
-        if Vd[id] < Vg[id] - Vp[id]:
+        if V1[id] - Vd[id] > Vp[id]:
             Vd[id] = Vdtemp1[id]
+        # Cutoff regime
+        elif V1[id] > Vp[id] and Vd[id] <= 0:
+            Vd[id] = Vdtemp2[id]
+        # Linear regime
         else:
             Vd[id] = Vdtemp3[id]
+    # for id in range(n):
+    #     if Vd[id] < Vg[id] - Vp[id]:
+    #         Vd[id] = Vdtemp1[id]
+    #     else:
+    #         Vd[id] = Vdtemp3[id]
 
 
 def train_oect_reservoir(
