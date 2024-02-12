@@ -16,7 +16,8 @@ def update_drain_voltage(Vd, Vg, V1, Vdinit, R, Rg, Vp, Kp, W, L):
     Vdtemp3 = -(1 / a) + (V1 - Vp) + (1 / a) * np.sqrt(np.maximum(delta, np.zeros(n)))
 
     # TODO which of the following is correct?
-    
+    # TODO neither of these match the paper as far as I can tell.
+
     # for id in range(n):
     #     if V1[id] - Vd[id] > Vp[id]:
     #         Vd[id] = Vdtemp1[id]
