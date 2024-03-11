@@ -34,11 +34,11 @@ def update_drain_voltage(Vd, Vg, V1, Vdinit, R, Rg, Vp, Kp, W, L):
 
 
 def train_oect_reservoir(
-    u0, tmax, dt, w_in, A, alpha, Vdinit, R, Rg, Cg, Vp, Kp, W, L, function, **args
+    u, tmax, dt, w_in, A, alpha, Vdinit, R, Rg, Cg, Vp, Kp, W, L, function, **args
 ):
     n = np.size(A, axis=0)
 
-    u = u0.copy()
+    # u = u0.copy()
     D = len(u)
 
     T = round(tmax / dt)

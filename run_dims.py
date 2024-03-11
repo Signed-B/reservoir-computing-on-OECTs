@@ -50,40 +50,41 @@ ensemble_results = []
 
 initt = time.time()
 
+ics = [[-7.4, -11.1, 20] + np.random.normal(size=3) * 0.05 for _ in range(iterations)]
+
+
+
 for iter in range(iterations):
     print(f"========== Iteration {iter}/{iterations} ==========")
     st = time.time()
 
     # ==== OECT ====
     # print("OECT data generation.")
-
-
-    OECT_signals = []
-    OECT_predictions = []
-
-
     # parameters for lorenz
     sigma = 10
     rho = 28
     beta = 8 / 3
 
 
-    x = -7.4
-    y = -11.1
-    z = 20
+    x = ics[iter][0]
+    y = ics[iter][1]
+    z = ics[iter][2]
     u = [x, y, z]
-
-
 
     # relax to attractor
     for t in range(5000):
         u += dt * lorenz(u, t, sigma, rho, beta)
 
-    u0 = u.copy()
+    OECT_signals = []
+    OECT_predictions = []
+
+    
 
     print("> Generating OECT data...")
     for n in reservoir_dims:
+        u0 = u.copy()
         print("> Dim", n)
+        print("u0", u0)
 
         # OECT parameters
         Vdinit, R, Rg, Cg, Vp, Kp, W, L = generate_OECT_parameters(n, parameters)
@@ -154,27 +155,28 @@ for iter in range(iterations):
     tanshift = 0
 
 
-    # parameters for lorenz
-    sigma = 10
-    rho = 28
-    beta = 8 / 3
+    # # parameters for lorenz
+    # sigma = 10
+    # rho = 28
+    # beta = 8 / 3
 
 
-    x = -7.4
-    y = -11.1
-    z = 20
-    u = [x, y, z]
+    # x = -7.4
+    # y = -11.1
+    # z = 20
+    # u = [x, y, z]
 
-    # relax to attractor
-    for t in range(5000):
-        u += dt * lorenz(u, t, sigma, rho, beta)
+    # # relax to attractor
+    # for t in range(5000):
+    #     u += dt * lorenz(u, t, sigma, rho, beta)
 
-    u0 = u.copy()
+    
 
     print("> Generating tanh data...")
     for n in reservoir_dims:
+        u0 = u.copy()
         print("> Dim", n)
-        u = u0.copy()
+        print("u0", u0)
 
         A = sparse.rand(n, n, 6 / n).A
         A = (mu / spectral_radius(A)) * A
@@ -182,11 +184,11 @@ for iter in range(iterations):
         w_in = w_in_sigma * (2.0 * np.random.rand(n, D) - np.ones((n, D)))
 
         ## train_reservoir
-        w_out, u, r = train_reservoir(n, D, u, A, ntraining, dt, w_in, alpha, lorenz, tanshift, sigma=sigma, rho=rho, beta=beta)
+        w_out, u0, r = train_reservoir(n, D, u0, A, ntraining, dt, w_in, alpha, lorenz, tanshift, sigma=sigma, rho=rho, beta=beta)
 
         ## Run reservoir autonomously.
         signal_during_auto, pred_during_auto = run_reservoir_autonomously(
-            n, D, u, r, A, ntraining, ntesting, dt, w_in, w_out,
+            n, D, u0, r, A, ntraining, ntesting, dt, w_in, w_out,
             lorenz, tanshift, sigma=sigma, rho=rho, beta=beta)
 
 
