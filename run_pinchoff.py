@@ -7,14 +7,14 @@ import scipy.sparse as sparse
 from src import *
 import time
 
-output = './Data/may8/dims_ensemble'
+output = './Data/may8/pinchoffs_ensemble'
 
 iterations = 2
 
-# reservoir_dims = [10, 25, 50, 100, 200, 300, 500, 1000]
-reservoir_dims = [10, 25,50]
+dim = 10
+# pinchoffs = [-.6, -.5, -.3, -.1, 0, .1, .3, .6]
+pinchoffs = [-.3, 0, .3]
 
-# training_time = 300 # training time/
 training_time = 100
 testing_time = 100
 dt = 0.01
@@ -24,9 +24,6 @@ ntesting = int(testing_time / dt)
 
 w_in_sigma = 0.004
 alpha = 0.00001
-
-# alpha multiple runs,
-# grid search optimization
 
 gateR = 2.7e4
 gateC = 8.98e-7
@@ -48,14 +45,11 @@ mu = 1.2
 
 ensemble_results = []
 
+
 # BEGIN ENSEMBLE RUNS
-print("run_dims.py: BEGIN ENSEMBLE RUNS")
+print("run_pinchoff.py: BEGIN ENSEMBLE RUNS")
 
 initt = time.time()
-
-ics = [[-7.4, -11.1, 20] + np.random.normal(size=3) * 0.05 for _ in range(iterations)]
-
-
 
 for iter in range(iterations):
     print(f"========== Iteration {iter}/{iterations} ==========")
@@ -63,32 +57,38 @@ for iter in range(iterations):
 
     # ==== OECT ====
     # print("OECT data generation.")
+
+
+    OECT_signals = []
+    OECT_predictions = []
+
+
     # parameters for lorenz
     sigma = 10
     rho = 28
     beta = 8 / 3
 
 
-    x = ics[iter][0]
-    y = ics[iter][1]
-    z = ics[iter][2]
+    x = -7.4
+    y = -11.1
+    z = 20
     u = [x, y, z]
+
+
 
     # relax to attractor
     for t in range(5000):
         u += dt * lorenz(u, t, sigma, rho, beta)
 
-    OECT_signals = []
-    OECT_predictions = []
-
-    
+    u0 = u.copy()
 
     print("> Generating OECT data...")
-    for n in reservoir_dims:
-        u0 = u.copy()
-        print("> Dim", n)
+    for p in pinchoffs:
+        print("> Pinch", p)
+        n = dim
 
         # OECT parameters
+        parameters["threshold-voltage"]["mean"] = p
         Vdinit, R, Rg, Cg, Vp, Kp, W, L = generate_OECT_parameters(n, parameters)
 
         A = sparse.rand(n, n, 6 / n).A
@@ -158,62 +158,35 @@ for iter in range(iterations):
     tanshift = 0
 
 
-    # # parameters for lorenz
-    # sigma = 10
-    # rho = 28
-    # beta = 8 / 3
+    # parameters for lorenz
+    sigma = 10
+    rho = 28
+    beta = 8 / 3
 
 
-    # x = -7.4
-    # y = -11.1
-    # z = 20
-    # u = [x, y, z]
+    x = -7.4
+    y = -11.1
+    z = 20
+    u = [x, y, z]
 
-    # # relax to attractor
-    # for t in range(5000):
-    #     u += dt * lorenz(u, t, sigma, rho, beta)
+    # relax to attractor
+    for t in range(5000):
+        u += dt * lorenz(u, t, sigma, rho, beta)
 
-    
+    u0 = u.copy()
 
-    print("> Generating tanh data...")
-    for n in reservoir_dims:
-        u0 = u.copy()
-        print("> Dim", n)
-
-        A = sparse.rand(n, n, 6 / n).A
-        A = A - np.diag(np.diag(A))
-        A = (mu / spectral_radius(A)) * A
-
-        w_in = w_in_sigma * (2.0 * np.random.rand(n, D) - np.ones((n, D)))
-
-        ## train_reservoir
-        w_out, u0, r = train_reservoir(n, D, u0, A, ntraining, dt, w_in, alpha, lorenz, tanshift, sigma=sigma, rho=rho, beta=beta)
-
-        ## Run reservoir autonomously.
-        signal_during_auto, pred_during_auto = run_reservoir_autonomously(
-            n, D, u0, r, A, ntraining, ntesting, dt, w_in, w_out,
-            lorenz, tanshift, sigma=sigma, rho=rho, beta=beta)
-
-
-        tanh_signals.append(signal_during_auto)
-        tanh_predictions.append(pred_during_auto)
 
     en_result = {"OECT_signals": OECT_signals,
-                 "OECT_predictions": OECT_predictions,
-                 "tanh_signals": tanh_signals,
-                 "tanh_predictions": tanh_predictions
+                 "OECT_predictions": OECT_predictions
                  }
     
     ensemble_results.append(en_result)
 
     print(f"> Time elapsed: {time.time() - st:.2f} s, total time: {time.time() - initt:.2f} s")
 
-
-
-# END ENSEMBLE
-
+# End Ensemble
 
 with shelve.open(f"{output}/data") as data:
     data["dicts"] = ensemble_results
     data["time"] = np.arange(0, testing_time, dt)
-    data["dims"] = reservoir_dims
+    data["pinchoffs"] = pinchoffs

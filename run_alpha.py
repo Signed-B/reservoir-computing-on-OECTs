@@ -7,12 +7,13 @@ import scipy.sparse as sparse
 from src import *
 import time
 
-output = './Data/may8/dims_ensemble'
+output = './Data/may8/alpha_ensemble'
 
 iterations = 2
 
-# reservoir_dims = [10, 25, 50, 100, 200, 300, 500, 1000]
-reservoir_dims = [10, 25,50]
+dim = 10
+# alphas = [0.00001, 0.0001, 0.001, 0.01, 0.1, 1]
+alphas = [0.00001, 0.0001, 0.001]
 
 # training_time = 300 # training time/
 training_time = 100
@@ -23,10 +24,6 @@ ntraining = int(training_time / dt)
 ntesting = int(testing_time / dt)
 
 w_in_sigma = 0.004
-alpha = 0.00001
-
-# alpha multiple runs,
-# grid search optimization
 
 gateR = 2.7e4
 gateC = 8.98e-7
@@ -49,7 +46,7 @@ mu = 1.2
 ensemble_results = []
 
 # BEGIN ENSEMBLE RUNS
-print("run_dims.py: BEGIN ENSEMBLE RUNS")
+print("run_alpha.py: BEGIN ENSEMBLE RUNS")
 
 initt = time.time()
 
@@ -84,14 +81,15 @@ for iter in range(iterations):
     
 
     print("> Generating OECT data...")
-    for n in reservoir_dims:
+    for alpha in alphas:
+        n = dim
         u0 = u.copy()
-        print("> Dim", n)
+        print("> Alpha", alpha)
 
         # OECT parameters
         Vdinit, R, Rg, Cg, Vp, Kp, W, L = generate_OECT_parameters(n, parameters)
 
-        A = sparse.rand(n, n, 6 / n).A
+        A = sparse.rand(n, n, 6/n).A # TODO: something / n instead?
         A = A - np.diag(np.diag(A))
         A = (mu / spectral_radius(A)) * A
 
@@ -176,11 +174,12 @@ for iter in range(iterations):
     
 
     print("> Generating tanh data...")
-    for n in reservoir_dims:
+    for alpha in alphas:
+        n = dim
         u0 = u.copy()
-        print("> Dim", n)
+        print("> Alpha", alpha)
 
-        A = sparse.rand(n, n, 6 / n).A
+        A = sparse.rand(n, n, 6/n).A # TODO also fix this.
         A = A - np.diag(np.diag(A))
         A = (mu / spectral_radius(A)) * A
 
@@ -216,4 +215,4 @@ for iter in range(iterations):
 with shelve.open(f"{output}/data") as data:
     data["dicts"] = ensemble_results
     data["time"] = np.arange(0, testing_time, dt)
-    data["dims"] = reservoir_dims
+    data["alphas"] = alphas
