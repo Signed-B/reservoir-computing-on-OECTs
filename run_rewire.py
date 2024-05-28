@@ -10,14 +10,14 @@ from tenacity import retry, stop_after_attempt
 
 output = './Data/may8/sparse_ensemble'
 
-iterations = 2
+iterations = 10
 
 dim = 100
-# sparsities = [.01, .05, .1, .2, .3, .4, .5]
-sparsities = [.01, .05, .1]
+# rewires = [.01, .05, .1, .2, .3, .4, .5]
+rewires = [.005, .01, .05, .1, .2, .3]
 
-# training_time = 300 # training time/
-training_time = 100
+training_time = 300 # training time/
+# training_time = 100
 testing_time = 100
 dt = 0.01
 
@@ -45,18 +45,20 @@ D = 3
 mu = 1.2
 
 
-@retry(stop=stop_after_attempt(5))
-def oect_iteration(sparsity):
+@retry(stop=stop_after_attempt(10))
+def oect_iteration(rewire):
     n = dim
     u0 = u.copy()
-    print("> Sparsity", sparsity)
+    print("> Rewire", rewire)
 
     # OECT parameters
     Vdinit, R, Rg, Cg, Vp, Kp, W, L = generate_OECT_parameters(n, parameters)
 
-    A = sparse.rand(n, n, sparsity).A # TODO: something / n instead?
-    A = A - np.diag(np.diag(A))
-    A = (mu / spectral_radius(A)) * A
+    # A = sparse.rand(n, n, rewire).A # TODO: something / n instead?
+    # A = A - np.diag(np.diag(A))
+    # A = (mu / spectral_radius(A)) * A
+
+    A = erdos_renyi_network(n, rewire, mu)
 
     w_in = w_in_sigma * (2.0 * np.random.rand(n, D) - np.ones((n, D)))
 
@@ -110,15 +112,17 @@ def oect_iteration(sparsity):
 
 
 
-@retry(stop=stop_after_attempt(5))
-def tanh_iteration(sparsity):
+@retry(stop=stop_after_attempt(10))
+def tanh_iteration(rewire):
     n = dim
     u0 = u.copy()
-    print("> sparsity", sparsity)
+    print("> Rewire", rewire)
 
-    A = sparse.rand(n, n, sparsity).A # TODO also fix this.
-    A = A - np.diag(np.diag(A))
-    A = (mu / spectral_radius(A)) * A
+    # A = sparse.rand(n, n, rewire).A # TODO also fix this.
+    # A = A - np.diag(np.diag(A))
+    # A = (mu / spectral_radius(A)) * A
+
+    A = erdos_renyi_network(n, rewire, mu)
 
     w_in = w_in_sigma * (2.0 * np.random.rand(n, D) - np.ones((n, D)))
 
@@ -174,7 +178,7 @@ if __name__ == "__main__":
         
 
         print("> Generating OECT data...")
-        for sparsity in sparsities:
+        for sparsity in rewires:
             signal, prediction = oect_iteration(sparsity)
 
             OECT_signals.append(signal)
@@ -194,7 +198,7 @@ if __name__ == "__main__":
         
 
         print("> Generating tanh data...")
-        for sparsity in sparsities:
+        for sparsity in rewires:
             signal_during_auto, pred_during_auto = tanh_iteration(sparsity)
 
 
@@ -219,4 +223,4 @@ if __name__ == "__main__":
     with shelve.open(f"{output}/data") as data:
         data["dicts"] = ensemble_results
         data["time"] = np.arange(0, testing_time, dt)
-        data["sparsities"] = sparsities
+        data["sparsities"] = rewires

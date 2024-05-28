@@ -9,14 +9,14 @@ import time
 
 output = './Data/may8/alpha_ensemble'
 
-iterations = 2
+iterations = 10
 
-dim = 10
+dim = 100
 # alphas = [0.00001, 0.0001, 0.001, 0.01, 0.1, 1]
-alphas = [0.00001, 0.0001, 0.001]
+alphas = [1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
 
-# training_time = 300 # training time/
-training_time = 100
+training_time = 300 # training time/
+# training_time = 100
 testing_time = 100
 dt = 0.01
 

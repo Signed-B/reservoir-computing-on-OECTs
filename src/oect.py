@@ -15,8 +15,6 @@ def update_drain_voltage(Vd, Vg, V1, Vdinit, R, Rg, Vp, Kp, W, L):
     delta = 2 * a * (Vdinit + b * (Vg - V1)) + (a * (V1 - Vp) - 1) ** 2
     Vdtemp3 = -(1 / a) + (V1 - Vp) + (1 / a) * np.sqrt(np.maximum(delta, np.zeros(n)))
 
-    # TODO 99% correct, check w/ Juan
-
     for id in range(n):
         if V1[id] - Vd[id] > Vp[id]:
             Vd[id] = Vdtemp1[id]
@@ -26,11 +24,6 @@ def update_drain_voltage(Vd, Vg, V1, Vdinit, R, Rg, Vp, Kp, W, L):
         # Linear regime
         else:
             Vd[id] = Vdtemp3[id]
-    # for id in range(n):
-    #     if Vd[id] < Vg[id] - Vp[id]:
-    #         Vd[id] = Vdtemp1[id]
-    #     else:
-    #         Vd[id] = Vdtemp3[id]
 
 
 def train_oect_reservoir(
@@ -56,7 +49,8 @@ def train_oect_reservoir(
 
         u += dt * function(u, t, **args)  # coordinates to feed to reservoir
 
-        Vg = np.dot(w_in, u) + np.dot(A, Vd)  # TODO dot?
+        Vg = np.dot(w_in, u) + np.dot(A, Vd)  # TODO vector f, equation 14
+
         V1 = V1 + dt * (Vg - V1) / (Rg * Cg)
 
         update_drain_voltage(Vd, Vg, V1, Vdinit, R, Rg, Vp, Kp, W, L)
@@ -110,9 +104,8 @@ def run_oect_reservoir_autonomously(
 
         u += dt * function(u, t, **args)
 
-        Vg = np.dot(w_in, v) + np.dot(
-            A, Vd
-        )  # here we feed v (previous output) instead of u
+        Vg = np.dot(w_in, v) + np.dot(A, Vd)  # TODO equation 21 (f vector)
+
         V1 = V1 + dt * (Vg - V1) / (Rg * Cg)
 
         update_drain_voltage(Vd, Vg, V1, Vdinit, R, Rg, Vp, Kp, W, L)
