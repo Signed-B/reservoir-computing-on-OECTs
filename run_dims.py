@@ -99,7 +99,7 @@ for iter in range(iterations):
 
         w_out, u0, r0, V1_0 = train_oect_reservoir(
             u0,
-            training_time,
+            training_time,off
             dt,
             w_in,
             A,
