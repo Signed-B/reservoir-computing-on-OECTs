@@ -99,7 +99,7 @@ for iter in range(iterations):
 
         w_out, u0, r0, V1_0 = train_oect_reservoir(
             u0,
-            training_time,off
+            training_time,
             dt,
             w_in,
             A,
@@ -150,6 +150,7 @@ for iter in range(iterations):
     # ==== tanh ====
     # print("Tanh data generation.")
 
+    # hi
 
     tanh_signals = []
     tanh_predictions = []
