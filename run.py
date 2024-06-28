@@ -4,11 +4,10 @@ import argparse
 import os
 import sys
 
-
 parser = argparse.ArgumentParser(
-                    prog='OECT Simulator',
-                    description='Simulate OECTs with reservoir computing',
-                    epilog='Enjoy the program! :)')
+    prog="OECT Simulator",
+    description="Simulate OECTs with reservoir computing",
+    epilog="Enjoy the program! :)",
+)
 
 # parser.add_argument()
-

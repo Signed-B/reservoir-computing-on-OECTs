@@ -1,9 +1,10 @@
+import random
+
 import numpy as np
 import scipy as sp
 from scipy import sparse
 from scipy.stats import gamma
 from sklearn.linear_model import Ridge
-import random
 
 
 def erdos_renyi_network(

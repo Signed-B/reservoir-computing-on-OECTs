@@ -1,17 +1,17 @@
 import shelve
 import sys
+import time
 
 import numpy as np
 import scipy.sparse as sparse
+from tenacity import retry, stop_after_attempt
 
 from src import *
-import time
-from tenacity import retry, stop_after_attempt
 
 
 class OECT:
     def __init__(self):
-        self.training_time = 300 # training time/
+        self.training_time = 300  # training time/
         # training_time = 100
         self.testing_time = 100
         self.dt = 0.01
@@ -28,7 +28,10 @@ class OECT:
         self.parameters["transconductance"] = {"mean": 0.582e-3, "stddev": 0.0582e-3}
         self.parameters["channel-width"] = {"mean": 200e-6, "stddev": 0}
         self.parameters["channel-length"] = {"mean": 101e-6, "stddev": 0}
-        self.parameters["threshold-voltage"] = {"mean": -0.6, "stddev": 0} # pinch-off voltage
+        self.parameters["threshold-voltage"] = {
+            "mean": -0.6,
+            "stddev": 0,
+        }  # pinch-off voltage
         self.parameters["weighting-resistor"] = {"mean": 500, "stddev": 100}
         self.parameters["gate-capacitance"] = {"mean": gateC, "stddev": 0.1 * gateC}
         self.parameters["gate-resistance"] = {"mean": gateR, "stddev": 0.1 * gateR}
@@ -64,7 +67,9 @@ class OECT:
 
         A = erdos_renyi_network(n, rewire, self.mu)
 
-        w_in = self.w_in_sigma * (2.0 * np.random.rand(n, self.D) - np.ones((n, self.D)))
+        w_in = self.w_in_sigma * (
+            2.0 * np.random.rand(n, self.D) - np.ones((n, self.D))
+        )
 
         w_out, u0, r0, V1_0 = train_oect_reservoir(
             u0,

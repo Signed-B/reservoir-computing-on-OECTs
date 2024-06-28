@@ -1,6 +1,8 @@
-from .utilities import get_output_layer
-import numpy as np
 import sys
+
+import numpy as np
+
+from .utilities import get_output_layer
 
 
 def train_reservoir(n, D, u, A, ntraining, dt, w_in, alpha, function, tanshift, **args):
@@ -15,7 +17,7 @@ def train_reservoir(n, D, u, A, ntraining, dt, w_in, alpha, function, tanshift, 
 
         u += dt * function(u, t, **args)
 
-        r = np.tanh(A.dot(r) + w_in.dot(u) + tanshift*np.ones(n))
+        r = np.tanh(A.dot(r) + w_in.dot(u) + tanshift * np.ones(n))
 
         # sys.stdout.write("\rTraining " + str(t))
 
@@ -31,7 +33,9 @@ def train_reservoir(n, D, u, A, ntraining, dt, w_in, alpha, function, tanshift, 
     return w_out, u, r
 
 
-def run_reservoir_autonomously(n, D, u, r, A, ntraining, ntesting, dt, w_in, w_out, function, tanshift, **args):
+def run_reservoir_autonomously(
+    n, D, u, r, A, ntraining, ntesting, dt, w_in, w_out, function, tanshift, **args
+):
     # adding to Z matrix to hold self-feedback states.
     # Z = np.concatenate(Z, np.zeros(ntraining, n))
     Za = np.zeros((ntraining, 2 * n))
@@ -46,7 +50,7 @@ def run_reservoir_autonomously(n, D, u, r, A, ntraining, ntesting, dt, w_in, w_o
 
         u += dt * function(u, t, **args)
 
-        r = np.tanh(A.dot(r) + w_in.dot(v) + tanshift*np.ones(n))
+        r = np.tanh(A.dot(r) + w_in.dot(v) + tanshift * np.ones(n))
 
         v = np.dot(
             w_out, np.concatenate((r, np.square(r)))
@@ -56,6 +60,5 @@ def run_reservoir_autonomously(n, D, u, r, A, ntraining, ntesting, dt, w_in, w_o
 
         signal_during_auto[t] = u
         pred_during_auto[t] = v
-
 
     return signal_during_auto, pred_during_auto
