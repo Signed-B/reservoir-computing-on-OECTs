@@ -1,5 +1,3 @@
-import sys
-
 import numpy as np
 
 from .utilities import get_output_layer
@@ -18,8 +16,6 @@ def train_reservoir(n, D, u, A, ntraining, dt, w_in, alpha, function, tanshift, 
         u += dt * function(u, t, **args)
 
         r = np.tanh(A.dot(r) + w_in.dot(u) + tanshift * np.ones(n))
-
-        # sys.stdout.write("\rTraining " + str(t))
 
         X[t] = u  # store coordinates in X matrix
 
@@ -55,8 +51,6 @@ def run_reservoir_autonomously(
         v = np.dot(
             w_out, np.concatenate((r, np.square(r)))
         )  # get output using optimized output matrix w]
-
-        # sys.stdout.write("\rTesting " + str(t))
 
         signal_during_auto[t] = u
         pred_during_auto[t] = v

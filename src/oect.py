@@ -1,5 +1,3 @@
-import sys
-
 import numpy as np
 
 from .utilities import get_output_layer
@@ -57,8 +55,6 @@ def train_oect_reservoir(
 
         r = Vd
 
-        # sys.stdout.write("\rTraining " + str(t))
-
         X[t] = u  # store coordinates in X matrix
     return get_output_layer(Z, X, alpha), u, r, V1
 
@@ -115,8 +111,6 @@ def run_oect_reservoir_autonomously(
         v = w_out.dot(
             np.concatenate((r, np.square(r)))
         )  # get output using optimized output matrix w]
-
-        # sys.stdout.write("\rTesting " + str(t))
 
         signal[t] = u
         prediction[t] = v
