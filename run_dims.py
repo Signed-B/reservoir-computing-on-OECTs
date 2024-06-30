@@ -2,7 +2,7 @@ import shelve
 import time
 
 import numpy as np
-import scipy.sparse as sparse
+from scipy.stats import uniform
 
 from src import *
 
@@ -42,7 +42,7 @@ parameters["applied-drain-voltage"] = {"mean": -0.05, "stddev": 0}
 
 # system
 D = 3
-mu = 1.2
+dist = uniform(100, 500)
 
 
 ensemble_results = []
@@ -86,9 +86,7 @@ for iter in range(iterations):
         # OECT parameters
         Vdinit, R, Rg, Cg, Vp, Kp, W, L = generate_OECT_parameters(n, parameters)
 
-        A = sparse.rand(n, n, 6 / n).A
-        A = A - np.diag(np.diag(A))
-        A = (mu / spectral_radius(A)) * A
+        A = erdos_renyi_network(n, 6 / n, dist)
 
         w_in = w_in_sigma * (2.0 * np.random.rand(n, D) - np.ones((n, D)))
 
@@ -170,9 +168,7 @@ for iter in range(iterations):
         u0 = u.copy()
         print("> Dim", n)
 
-        A = sparse.rand(n, n, 6 / n).A
-        A = A - np.diag(np.diag(A))
-        A = (mu / spectral_radius(A)) * A
+        A = erdos_renyi_network(n, 6 / n, dist)
 
         w_in = w_in_sigma * (2.0 * np.random.rand(n, D) - np.ones((n, D)))
 
