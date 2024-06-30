@@ -13,7 +13,7 @@ tures to explore the state space of hyperparameters and to optimize the reservoi
 set of OECTs with given operating parameters. We find that our model accurately captures the
 qualitative behavior of the transient dynamics of an OECT with a time-varying input signal.
 
-## Requriements
+## Requirements
 
 Package requirements
 
@@ -23,8 +23,4 @@ Usage
 
 ## License
 
-Distributed under the MIT License. See `LICENSE.txt` for more information.
-
-# Acknowledgments
-
-.
+Distributed under the BSD-3 License. See `LICENSE.txt` for more information.
