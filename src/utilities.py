@@ -7,23 +7,17 @@ from scipy.stats import gamma
 from sklearn.linear_model import Ridge
 
 
-def erdos_renyi_network(
-    n, p, spectral_radius, negative_weights=False, is_random_weight=True
-):
-    if is_random_weight and negative_weights:
-        # weight = partial(random.uniform, -1, 1)
-        weight = lambda: random.random() - 0.5
-    elif is_random_weight and not negative_weights:
-        weight = lambda: random.random()
-    else:
-        weight = lambda: 1
-    A = np.zeros((n, n))
+def erdos_renyi_network(n, p, Rg, dist):
+    R = np.zeros((n, n))
     for i in range(n):
         for j in range(n):
             if random.random() <= p and i != j:
-                A[i, j] = weight()
-    actual_spectral_radius = abs(np.max(np.linalg.eigvals(A)))
-    return spectral_radius / actual_spectral_radius * A
+                R[i, j] = dist.rvs()
+            else:
+                R[i, j] = np.inf
+
+    S = np.divide(1, Rg) + np.divide(1, R).sum(axis=0)
+    return np.divide(1, S * R)
 
 
 def get_output_layer(r, signal, beta=0, solver="ridge"):

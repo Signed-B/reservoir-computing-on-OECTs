@@ -56,10 +56,6 @@ class OECT:
         # OECT parameters
         Vdinit, R, Rg, Cg, Vp, Kp, W, L = generate_OECT_parameters(n, self.parameters)
 
-        # A = sparse.rand(n, n, rewire).A # TODO: something / n instead?
-        # A = A - np.diag(np.diag(A))
-        # A = (mu / spectral_radius(A)) * A
-
         A = erdos_renyi_network(n, rewire, self.mu)
 
         w_in = self.w_in_sigma * (
