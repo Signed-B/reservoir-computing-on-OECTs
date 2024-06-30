@@ -12,8 +12,8 @@ output = "./Data/may8/sparse_ensemble"
 iterations = 10
 
 dim = 100
-# rewires = [.01, .05, .1, .2, .3, .4, .5]
-rewires = [0.005, 0.01, 0.05, 0.1, 0.2, 0.3]
+# plist = [.01, .05, .1, .2, .3, .4, .5]
+plist = [0.005, 0.01, 0.05, 0.1, 0.2, 0.3]
 
 training_time = 300  # training time/
 # training_time = 100
@@ -45,15 +45,15 @@ mu = 1.2
 
 
 @retry(stop=stop_after_attempt(10))
-def oect_iteration(rewire):
+def oect_iteration(p):
     n = dim
     u0 = u.copy()
-    print("> Rewire", rewire)
+    print("> p", p)
 
     # OECT parameters
     Vdinit, R, Rg, Cg, Vp, Kp, W, L = generate_OECT_parameters(n, parameters)
 
-    A = erdos_renyi_network(n, rewire, mu)
+    A = erdos_renyi_network(n, p, mu)
 
     w_in = w_in_sigma * (2.0 * np.random.rand(n, D) - np.ones((n, D)))
 
@@ -105,12 +105,12 @@ def oect_iteration(rewire):
 
 
 @retry(stop=stop_after_attempt(10))
-def tanh_iteration(rewire):
+def tanh_iteration(p):
     n = dim
     u0 = u.copy()
-    print("connection probability", rewire)
+    print("connection probability", p)
 
-    A = erdos_renyi_network(n, rewire, mu)
+    A = erdos_renyi_network(n, p, mu)
 
     w_in = w_in_sigma * (2.0 * np.random.rand(n, D) - np.ones((n, D)))
 
@@ -189,8 +189,8 @@ if __name__ == "__main__":
         OECT_predictions = []
 
         print("> Generating OECT data...")
-        for sparsity in rewires:
-            signal, prediction = oect_iteration(sparsity)
+        for p in plist:
+            signal, prediction = oect_iteration(p)
 
             OECT_signals.append(signal)
             OECT_predictions.append(prediction)
@@ -204,8 +204,8 @@ if __name__ == "__main__":
         tanshift = 0
 
         print("> Generating tanh data...")
-        for sparsity in rewires:
-            signal_during_auto, pred_during_auto = tanh_iteration(sparsity)
+        for p in plist:
+            signal_during_auto, pred_during_auto = tanh_iteration(p)
 
             tanh_signals.append(signal_during_auto)
             tanh_predictions.append(pred_during_auto)
@@ -228,4 +228,4 @@ if __name__ == "__main__":
     with shelve.open(f"{output}/data") as data:
         data["dicts"] = ensemble_results
         data["time"] = np.arange(0, testing_time, dt)
-        data["sparsities"] = rewires
+        data["sparsities"] = plist
