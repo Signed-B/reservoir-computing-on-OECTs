@@ -13,7 +13,9 @@ filepath = [
     "Data/may8/sparse_ensemble/data",
     "Data/may8/alpha_ensemble/data",
 ]
+
 variable_names = ["dims", "pinchoffs", "sparsities", "alphas"]
+
 condensed_filenames = [
     "Data/FH_vs_size.json",
     "Data/FH_vs_pinchoff.json",
