@@ -2,6 +2,7 @@ import random
 
 import numpy as np
 import scipy as sp
+from numpy.linalg import norm
 from scipy import sparse
 from scipy.stats import gamma
 from sklearn.linear_model import Ridge
@@ -96,3 +97,8 @@ def gamma_distribution(n, mean, variance):
         alpha = mean**2 / variance
         beta = mean / variance
         return gamma(alpha, scale=1 / beta).rvs(n)
+
+
+def forecast_horizon(signal, prediction, t, tol):
+    i = np.argmax(norm(signal - prediction, axis=1, ord=2) > tol)
+    return t[i]
