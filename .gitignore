@@ -1,7 +1,8 @@
-# Project specific files
-data/
-Data/
-Data.zip
+# shelve and zip files
+*.bak
+*.dat
+*.dir
+*.zip
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
