@@ -2,7 +2,7 @@ import shelve
 import time
 
 import numpy as np
-import scipy.sparse as sparse
+from scipy.stats import gamma, uniform
 from tenacity import retry, stop_after_attempt
 
 from src import *
@@ -41,7 +41,7 @@ parameters["applied-drain-voltage"] = {"mean": -0.05, "stddev": 0}
 
 # system
 D = 3
-mu = 1.2
+dist = uniform(100, 500)
 
 
 @retry(stop=stop_after_attempt(10))
@@ -53,7 +53,7 @@ def oect_iteration(p):
     # OECT parameters
     Vdinit, R, Rg, Cg, Vp, Kp, W, L = generate_OECT_parameters(n, parameters)
 
-    A = erdos_renyi_network(n, p, mu)
+    A = erdos_renyi_network(n, p, dist)
 
     w_in = w_in_sigma * (2.0 * np.random.rand(n, D) - np.ones((n, D)))
 
@@ -110,7 +110,7 @@ def tanh_iteration(p):
     u0 = u.copy()
     print("connection probability", p)
 
-    A = erdos_renyi_network(n, p, mu)
+    A = erdos_renyi_network(n, p, dist)
 
     w_in = w_in_sigma * (2.0 * np.random.rand(n, D) - np.ones((n, D)))
 

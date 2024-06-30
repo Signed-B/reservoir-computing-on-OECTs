@@ -7,7 +7,12 @@ from scipy.stats import gamma
 from sklearn.linear_model import Ridge
 
 
-def erdos_renyi_network(n, p, Rg, dist):
+def erdos_renyi_network(n, p, dist, Rg=None):
+    # If it is not explicitly stated, we neglect the Rg term
+    if Rg is None:
+        Rg = np.inf * np.ones(n)
+
+    # generate the theoretical directed network
     R = np.zeros((n, n))
     for i in range(n):
         for j in range(n):
@@ -16,6 +21,7 @@ def erdos_renyi_network(n, p, Rg, dist):
             else:
                 R[i, j] = np.inf
 
+    # create the adjacency matrix from the resistor network
     S = np.divide(1, Rg) + np.divide(1, R).sum(axis=0)
     return np.divide(1, S * R)
 
@@ -29,12 +35,14 @@ def get_output_layer(r, signal, beta=0, solver="ridge"):
             np.matmul(r.T, signal),
         ).T
         return output_layer
+
     if solver == "scipy":
         output_layer = sp.linalg.solve(
             np.matmul(r.T, r) + beta * sparse.identity(dim_reservoir),
             np.matmul(r.T, signal),
         ).T
         return output_layer
+
     elif solver == "ridge":
         clf = Ridge(alpha=beta, solver="cholesky", fit_intercept=False)
         clf.fit(r, signal)

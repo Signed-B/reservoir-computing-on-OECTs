@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.stats import uniform
 from tenacity import retry, stop_after_attempt
 
 from src import *
@@ -34,29 +35,29 @@ class OECT:
 
         # system
         self.D = 3
-        self.mu = 1.2
+        self.dist = uniform(100, 500)
         pass
 
     @retry(stop=stop_after_attempt(10))
-    def oect_iteration(self, u, dim=None, alpha=None, pinchoff=None, rewire=None):
+    def oect_iteration(self, u, dim=None, alpha=None, pinchoff=None, p=None):
         # Parameters
         if dim is None:
             dim = self.dim
         if alpha is None:
             alpha = self.alpha
-        if rewire is None:
-            rewire = self.rewire
+        if p is None:
+            p = self.p
         if pinchoff:
             self.parameters["threshold-voltage"]["mean"] = pinchoff
 
         n = dim
         u0 = u.copy()
-        print("> Rewire", rewire)
+        print("> p", p)
 
         # OECT parameters
         Vdinit, R, Rg, Cg, Vp, Kp, W, L = generate_OECT_parameters(n, self.parameters)
 
-        A = erdos_renyi_network(n, rewire, self.mu)
+        A = erdos_renyi_network(n, p, self.dist)
 
         w_in = self.w_in_sigma * (
             2.0 * np.random.rand(n, self.D) - np.ones((n, self.D))
