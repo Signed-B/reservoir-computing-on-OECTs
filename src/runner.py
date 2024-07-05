@@ -1,17 +1,13 @@
-import shelve
-import sys
-
 import numpy as np
-import scipy.sparse as sparse
+from scipy.stats import uniform
+from tenacity import retry, stop_after_attempt
 
 from src import *
-import time
-from tenacity import retry, stop_after_attempt
 
 
 class OECT:
     def __init__(self):
-        self.training_time = 300 # training time/
+        self.training_time = 300  # training time/
         # training_time = 100
         self.testing_time = 100
         self.dt = 0.01
@@ -28,7 +24,10 @@ class OECT:
         self.parameters["transconductance"] = {"mean": 0.582e-3, "stddev": 0.0582e-3}
         self.parameters["channel-width"] = {"mean": 200e-6, "stddev": 0}
         self.parameters["channel-length"] = {"mean": 101e-6, "stddev": 0}
-        self.parameters["threshold-voltage"] = {"mean": -0.6, "stddev": 0} # pinch-off voltage
+        self.parameters["threshold-voltage"] = {
+            "mean": -0.6,
+            "stddev": 0,
+        }  # pinch-off voltage
         self.parameters["weighting-resistor"] = {"mean": 500, "stddev": 100}
         self.parameters["gate-capacitance"] = {"mean": gateC, "stddev": 0.1 * gateC}
         self.parameters["gate-resistance"] = {"mean": gateR, "stddev": 0.1 * gateR}
@@ -36,35 +35,33 @@ class OECT:
 
         # system
         self.D = 3
-        self.mu = 1.2
+        self.dist = uniform(100, 500)
         pass
 
     @retry(stop=stop_after_attempt(10))
-    def oect_iteration(self, u, dim=None, alpha=None, pinchoff=None, rewire=None):
+    def oect_iteration(self, u, dim=None, alpha=None, pinchoff=None, p=None):
         # Parameters
         if dim is None:
             dim = self.dim
         if alpha is None:
             alpha = self.alpha
-        if rewire is None:
-            rewire = self.rewire
+        if p is None:
+            p = self.p
         if pinchoff:
             self.parameters["threshold-voltage"]["mean"] = pinchoff
 
         n = dim
         u0 = u.copy()
-        print("> Rewire", rewire)
+        print("> p", p)
 
         # OECT parameters
         Vdinit, R, Rg, Cg, Vp, Kp, W, L = generate_OECT_parameters(n, self.parameters)
 
-        # A = sparse.rand(n, n, rewire).A # TODO: something / n instead?
-        # A = A - np.diag(np.diag(A))
-        # A = (mu / spectral_radius(A)) * A
+        A = erdos_renyi_network(n, p, self.dist)
 
-        A = erdos_renyi_network(n, rewire, self.mu)
-
-        w_in = self.w_in_sigma * (2.0 * np.random.rand(n, self.D) - np.ones((n, self.D)))
+        w_in = self.w_in_sigma * (
+            2.0 * np.random.rand(n, self.D) - np.ones((n, self.D))
+        )
 
         w_out, u0, r0, V1_0 = train_oect_reservoir(
             u0,
