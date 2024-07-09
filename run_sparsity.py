@@ -33,7 +33,7 @@ parameters = dict()
 parameters["transconductance"] = {"mean": 0.582e-3, "stddev": 0.0582e-3}
 parameters["channel-width"] = {"mean": 200e-6, "stddev": 0}
 parameters["channel-length"] = {"mean": 101e-6, "stddev": 0}
-parameters["threshold-voltage"] = {"mean": -0.6, "stddev": 0}  # pinch-off voltage
+parameters["pinchoff-voltage"] = {"mean": -0.6, "stddev": 0}  # pinch-off voltage
 parameters["weighting-resistor"] = {"mean": 500, "stddev": 100}
 parameters["gate-capacitance"] = {"mean": gateC, "stddev": 0.1 * gateC}
 parameters["gate-resistance"] = {"mean": gateR, "stddev": 0.1 * gateR}
@@ -112,7 +112,7 @@ def tanh_iteration(p):
 
     A = erdos_renyi_network(n, p, dist)
 
-    w_in = w_in_sigma * (2.0 * np.random.rand(n, D) - np.ones((n, D)))
+    w_in = input_layer(n, D, w_in_sigma)
 
     ## train_reservoir
     w_out, u0, r = train_reservoir(
