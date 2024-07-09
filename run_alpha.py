@@ -7,11 +7,11 @@ from joblib import Parallel, delayed
 from scipy.stats import norm, uniform
 
 from src import *
+import json
 
 
 def run_OECT_prediction(
-    signal_fname,
-    prediction_fname,
+    fname,
     u0,
     n,
     p,
@@ -22,6 +22,7 @@ def run_OECT_prediction(
     testing_time,
 ):
     dt = 0.01
+    frac = 1
     w_in_sigma = 0.004
 
     D = len(u0)
@@ -42,6 +43,7 @@ def run_OECT_prediction(
         u0,
         training_time,
         dt,
+        frac,
         w_in,
         A,
         alpha,
@@ -59,7 +61,7 @@ def run_OECT_prediction(
         beta=beta,
     )
 
-    signal, prediction = run_oect_reservoir_autonomously(
+    t, signal, prediction = run_oect_reservoir_autonomously(
         u0,
         r0,
         V1_0,
@@ -82,14 +84,20 @@ def run_OECT_prediction(
         beta=beta,
     )
 
-    np.savetxt(signal_fname, signal)
-    np.savetxt(prediction_fname, prediction)
+    data = {}
+    data["t"] = t.tolist()
+    data["signal"] = signal.tolist()
+    data["prediction"] = prediction.tolist()
+
+    datastring = json.dumps(data)
+
+    with open(fname, "w") as output_file:
+        output_file.write(datastring)
     print("Single run completed!", flush=True)
 
 
 def run_tanh_prediction(
-    signal_fname,
-    prediction_fname,
+    fname,
     u0,
     n,
     p,
@@ -99,6 +107,7 @@ def run_tanh_prediction(
     testing_time,
 ):
     dt = 0.01
+    frac = 1
     w_in_sigma = 0.004
 
     D = len(u0)
@@ -118,6 +127,7 @@ def run_tanh_prediction(
         A,
         training_time,
         dt,
+        frac,
         w_in,
         alpha,
         lorenz,
@@ -128,7 +138,7 @@ def run_tanh_prediction(
     )
 
     ## Run reservoir autonomously.
-    signal, prediction = run_reservoir_autonomously(
+    t, signal, prediction = run_reservoir_autonomously(
         u0,
         r,
         A,
@@ -142,8 +152,15 @@ def run_tanh_prediction(
         rho=rho,
         beta=beta,
     )
-    np.savetxt(signal_fname, signal)
-    np.savetxt(prediction_fname, prediction)
+    data = {}
+    data["t"] = t.tolist()
+    data["signal"] = signal.tolist()
+    data["prediction"] = prediction.tolist()
+
+    datastring = json.dumps(data)
+
+    with open(fname, "w") as output_file:
+        output_file.write(datastring)
     print("Single run completed!", flush=True)
 
 
@@ -210,8 +227,7 @@ for alpha in alphas:
     for i in range(iterations):
         arglist.append(
             (
-                f"Data/Alpha/{alpha}_{i}_OECT_signal.csv",
-                f"Data/Alpha/{alpha}_{i}_OECT_prediction.csv",
+                f"Data/Alpha/{alpha}_{i}_OECT.json",
                 u0[i].copy(),
                 n,
                 p,
@@ -230,8 +246,7 @@ for alpha in alphas:
     for i in range(iterations):
         arglist.append(
             (
-                f"Data/Alpha/{alpha}_{i}_tanh_signal.csv",
-                f"Data/Alpha/{alpha}_{i}_tanh_prediction.csv",
+                f"Data/Alpha/{alpha}_{i}_tanh.json",
                 u0[i].copy(),
                 n,
                 p,
