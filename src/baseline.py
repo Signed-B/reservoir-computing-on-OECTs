@@ -3,13 +3,19 @@ import numpy as np
 from .utilities import get_output_layer
 
 
-def train_reservoir(n, D, u, A, ntraining, dt, w_in, alpha, function, tanshift, **args):
+def train_reservoir(u0, A, tmax, dt, w_in, alpha, function, tanshift, **args):
+    n = A.shape[0]
+    D = len(u0)
     r = np.zeros(n)
 
-    X = np.zeros((ntraining, D))  # to store x,y,z Lorenz coordinates
-    Z = np.zeros((ntraining, 2 * n))
+    u = u0.copy()
 
-    for t in range(ntraining):  # Training period
+    T = round(tmax / dt)
+
+    X = np.zeros((T, D))  # to store x,y,z Lorenz coordinates
+    Z = np.zeros((T, 2 * n))
+
+    for t in range(T):  # Training period
 
         Z[t] = np.concatenate((r, np.square(r)))  # reservoir states with trick
 
@@ -30,18 +36,22 @@ def train_reservoir(n, D, u, A, ntraining, dt, w_in, alpha, function, tanshift, 
 
 
 def run_reservoir_autonomously(
-    n, D, u, r, A, ntraining, ntesting, dt, w_in, w_out, function, tanshift, **args
+    u0, r, A, tmax, dt, w_in, w_out, function, tanshift, **args
 ):
+    n = A.shape[0]
+    D = len(u0)
     # adding to Z matrix to hold self-feedback states.
     # Z = np.concatenate(Z, np.zeros(ntraining, n))
-    Za = np.zeros((ntraining, 2 * n))
+
+    T = round(tmax / dt)
+    Za = np.zeros((T, 2 * n))
 
     v = np.dot(w_out, np.concatenate((r, np.square(r))))
 
-    signal_during_auto = np.zeros((ntesting, D))
-    pred_during_auto = np.zeros((ntesting, D))
+    signal = np.zeros((T, D))
+    prediction = np.zeros((T, D))
 
-    for t in range(ntesting):
+    for t in range(T):
         Za[t] = np.concatenate((r, np.square(r)))  # reservoir states with trick
 
         u += dt * function(u, t, **args)
@@ -52,7 +62,7 @@ def run_reservoir_autonomously(
             w_out, np.concatenate((r, np.square(r)))
         )  # get output using optimized output matrix w]
 
-        signal_during_auto[t] = u
-        pred_during_auto[t] = v
+        signal[t] = u
+        prediction[t] = v
 
-    return signal_during_auto, pred_during_auto
+    return signal, prediction
