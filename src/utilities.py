@@ -2,10 +2,14 @@ import random
 
 import numpy as np
 import scipy as sp
-from numpy.linalg import norm
+from numpy.linalg import norm as matrix_norm
 from scipy import sparse
 from scipy.stats import gamma
 from sklearn.linear_model import Ridge
+
+
+def input_layer(n, D, sigma):
+    return sigma * np.random.uniform(low=-1, high=1, size=(D, n))
 
 
 def erdos_renyi_network(n, p, dist, Rg=None):
@@ -67,8 +71,8 @@ def generate_OECT_parameters(n, parameters):
     stddev = parameters["channel-length"]["stddev"]
     L = gamma_distribution(n, mean, stddev**2)
 
-    mean = parameters["threshold-voltage"]["mean"]
-    stddev = parameters["threshold-voltage"]["stddev"]
+    mean = parameters["pinchoff-voltage"]["mean"]
+    stddev = parameters["pinchoff-voltage"]["stddev"]
     Vp = gamma_distribution(n, mean, stddev**2)
 
     mean = parameters["weighting-resistor"]["mean"]
@@ -100,5 +104,18 @@ def gamma_distribution(n, mean, variance):
 
 
 def forecast_horizon(signal, prediction, t, tol):
-    i = np.argmax(norm(signal - prediction, axis=1, ord=2) > tol)
+    i = np.argmax(matrix_norm(signal - prediction, axis=1, ord=2) > tol)
     return t[i]
+
+
+def generate_initial_conditions(n, u0, dist, relaxation_time, dt, function, **args):
+    D = len(u0)
+    ics = np.zeros((n, D))
+    for i in range(n):
+        u = u0.copy() + dist.rvs(size=D)
+        for t in range(relaxation_time):
+            u += dt * function(u, t, **args)
+
+        ics[i] = u
+
+    return ics
