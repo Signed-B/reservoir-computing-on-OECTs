@@ -38,13 +38,10 @@ def train_oect_reservoir(
     Vd = np.zeros(n)
 
     X = np.zeros((T, D))  # to store x,y,z Lorenz coordinates
-    Z = np.zeros((T, 2 * n))
-    r = Vd
+    r = np.zeros((T, n))
+    r[0] = Vd
 
-    for t in range(T):  # Training period
-
-        Z[t] = np.concatenate((r, np.square(r)))  # reservoir states with trick
-
+    for t in range(T - 1):  # Training period
         u += dt * function(u, t, **args)  # coordinates to feed to reservoir
 
         Vg = np.dot(w_in, u) + np.dot(A, Vd)  # TODO vector f, equation 14
@@ -52,11 +49,10 @@ def train_oect_reservoir(
         V1 = V1 + dt * (Vg - V1) / (Rg * Cg)
 
         update_drain_voltage(Vd, Vg, V1, Vdinit, R, Rg, Vp, Kp, W, L)
-
-        r = Vd
+        r[t + 1] = Vd
 
         X[t] = u  # store coordinates in X matrix
-    return get_output_layer(Z, X, alpha), u, r, V1
+    return get_output_layer(r, X, alpha), u, r[-1], V1
 
 
 def run_oect_reservoir_autonomously(
@@ -85,34 +81,34 @@ def run_oect_reservoir_autonomously(
     D = len(u)
     T = round(tmax / dt)
 
-    v = np.dot(w_out, np.concatenate((r0, np.square(r0))))
-    r = r0.copy()
-    Vd = r
+    r = np.zeros((T, n))
+    r[0] = r0.copy()
+    v = w_out.dot(r[0])
+
+    Vd = r[0].copy()
     V1 = V1_0.copy()
 
     signal = np.zeros((T, D))
     prediction = np.zeros((T, D))
 
-    Z = np.zeros((T, 2 * n))
-
-    for t in range(T):
-        Z[t] = np.concatenate((r, np.square(r)))  # reservoir states with trick
-
+    t = np.zeros(T)
+    t[0] = 0
+    for i in range(T - 1):
         u += dt * function(u, t, **args)
 
-        Vg = np.dot(w_in, v) + np.dot(A, Vd)  # TODO equation 21 (f vector)
+        Vg = w_in.dot(v) + A.dot(Vd)  # TODO equation 21 (f vector)
 
-        V1 = V1 + dt * (Vg - V1) / (Rg * Cg)
+        V1 += + dt * (Vg - V1) / (Rg * Cg)
 
         update_drain_voltage(Vd, Vg, V1, Vdinit, R, Rg, Vp, Kp, W, L)
 
-        r = Vd
+        r[i + 1] = Vd.copy()
 
-        v = w_out.dot(
-            np.concatenate((r, np.square(r)))
-        )  # get output using optimized output matrix w]
+        v = w_out.dot(Vd)  # get output using optimized output matrix w]
 
-        signal[t] = u
-        prediction[t] = v
+        signal[i] = u
+        prediction[i] = v
 
-    return signal, prediction
+        t[i + 1] = t[i] + dt
+
+    return t, signal, prediction
