@@ -66,12 +66,8 @@ def train_oect_reservoir(
         r[t + 1] = Vd
 
         X[t] = u  # store coordinates in X matrix
-    return (
-        get_output_layer(r[: round(frac * T)], X[: round(frac * T)], alpha),
-        u,
-        r[-1],
-        V1,
-    )
+    w_out = get_output_layer(r[-round(frac * T) :], X[-round(frac * T) :], alpha)
+    return w_out, u, r[-1], V1
 
 
 def run_oect_reservoir_autonomously(
@@ -174,7 +170,8 @@ def train_oect_reservoir_with_squaring(
         r = Vd
 
         X[t] = u  # store coordinates in X matrix
-    return get_output_layer(Z[: round(frac * T)], X[: round(frac * T)], alpha), u, r, V1
+    w_out = get_output_layer(Z[-round(frac * T) :], X[-round(frac * T) :], alpha)
+    return w_out, u, r, V1
 
 
 def run_oect_reservoir_autonomously_with_squaring(

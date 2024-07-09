@@ -3,34 +3,34 @@ import numpy as np
 from .utilities import get_output_layer
 
 
-def train_reservoir(u0, A, tmax, dt, w_in, alpha, function, tanshift, **args):
+def train_reservoir(u0, A, tmax, dt, frac, w_in, alpha, function, tanshift, **args):
     n = A.shape[0]
     D = len(u0)
-    r = np.zeros(n)
+    T = round(tmax / dt)
 
     u = u0.copy()
 
-    T = round(tmax / dt)
-
+    r = np.zeros(n)
     X = np.zeros((T, D))  # to store x,y,z Lorenz coordinates
     Z = np.zeros((T, 2 * n))
+    X[0] = u
 
-    for t in range(T):  # Training period
+    for t in range(T - 1):  # Training period
 
-        Z[t] = np.concatenate((r, np.square(r)))  # reservoir states with trick
+        Z[t + 1] = np.concatenate((r, np.square(r)))  # reservoir states with trick
 
         u += dt * function(u, t, **args)
 
         r = np.tanh(A.dot(r) + w_in.dot(u) + tanshift * np.ones(n))
 
-        X[t] = u  # store coordinates in X matrix
+        X[t + 1] = u  # store coordinates in X matrix
 
         # Could plot training period asw.
         # ye(t) = y # for plotting
         # ze(t) = z
         # xe(t) = x
 
-    w_out = get_output_layer(Z, X, alpha)
+    w_out = get_output_layer(Z[-round(frac * T) :], X[-round(frac * T) :], alpha)
 
     return w_out, u, r
 
