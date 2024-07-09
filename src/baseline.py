@@ -66,4 +66,4 @@ def run_reservoir_autonomously(
         prediction[i + 1] = v
         t[i + 1] = t[i] + dt
 
-    return signal, prediction
+    return t, signal, prediction
