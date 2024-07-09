@@ -122,7 +122,7 @@ def run_tanh_prediction(
 
     A = erdos_renyi_network(n, p, r_dist)
 
-    w_in = input_layer(n, D, w_in_sigma)
+    w_in = input_layer(D, n, w_in_sigma)
 
     ## train_reservoir
     w_out, u0, r = train_reservoir(
@@ -167,12 +167,18 @@ def run_tanh_prediction(
     print("Single run completed!", flush=True)
 
 
+# delete all previous data files
+data_dir = "Data/Alpha"
+os.makedirs(data_dir, exist_ok=True)
+
+for f in os.listdir(data_dir):
+    os.remove(os.path.join(data_dir, f))
+
+# number of available cores
 n_processes = len(os.sched_getaffinity(0))
 
-output = "./Data/may8/alpha_ensemble"
 
-iterations = 100
-
+iterations = 10
 n = 100
 alphas = [1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
 
