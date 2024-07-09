@@ -1,14 +1,14 @@
+import json
 import os
 import time
 from copy import deepcopy
 
+import networkx as nx
 import numpy as np
 from joblib import Parallel, delayed
 from scipy.stats import norm, uniform
-import networkx as nx
 
 from src import *
-import json
 
 
 def run_OECT_prediction(
@@ -176,6 +176,7 @@ for f in os.listdir(data_dir):
 
 # number of available cores
 n_processes = len(os.sched_getaffinity(0))
+print(f"Running on {n_processes} cores", flush=True)
 
 
 iterations = 10

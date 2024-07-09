@@ -1,67 +1,91 @@
 import json
-import shelve
+import os
 
 import numpy as np
+from joblib import Parallel, delayed
 
 from src import forecast_horizon
 
-tol = 5  # Forecast horizon tolerance
 
-filepath = [
-    "Data/may8/dims_ensemble/data",
-    "Data/may8/pinchoffs_ensemble/data",
-    "Data/may8/sparse_ensemble/data",
-    "Data/may8/alpha_ensemble/data",
-]
+def collect_parameters(dir):
+    varlist = set()
+    rlist = set()
 
-variable_names = ["dims", "pinchoffs", "sparsities", "alphas"]
+    for f in os.listdir(dir):
+        d = f.split(".json")[0].split("_")
 
-condensed_filenames = [
-    "Data/FH_vs_size.json",
-    "Data/FH_vs_pinchoff.json",
-    "Data/FH_vs_p.json",
-    "Data/FH_vs_alpha.json",
-]
+        var = float(d[0])
+        r = int(d[1])
 
-for i, f in enumerate(filepath):
-    k = variable_names[i]
-    new_f = condensed_filenames[i]
+        varlist.add(var)
+        rlist.add(r)
 
-    with shelve.open(f) as data:
-        datadicts = data["dicts"]
-        v = np.array(data[k], dtype=float)
-        t = data["time"]
+    v_dict = {c: i for i, c in enumerate(sorted(varlist))}
+    r_dict = {r: i for i, r in enumerate(sorted(rlist))}
 
-    num_sims = len(datadicts)  # Number of simulations in run_dims.py
-    num_params = len(v)
+    return v_dict, r_dict
 
-    FH_OECT = np.zeros((num_params, num_sims))
-    FH_tanh = np.zeros((num_params, num_sims))
 
-    # Ensemble begin
-    for i in range(num_sims):
-        OECT_signals = datadicts[i]["OECT_signals"]
-        OECT_predictions = datadicts[i]["OECT_predictions"]
-        if k != "pinchoffs":
-            tanh_signals = datadicts[i]["tanh_signals"]
-            tanh_predictions = datadicts[i]["tanh_predictions"]
+def get_data(f, dir, v_dict, r_dict, tol):
+    fname = os.path.join(dir, f)
+    d = f.split(".json")[0].split("_")
+    var = float(d[0])
+    r = int(d[1])
+    rc = d[2]
 
-        for j in range(num_params):
-            OECT_signal = OECT_signals[j]
-            OECT_prediction = OECT_predictions[j]
+    i = v_dict[var]
+    j = r_dict[r]
 
-            tanh_signal = tanh_signals[j]
-            tanh_prediction = tanh_predictions[j]
+    with open(fname, "r") as file:
+        data = json.loads(file.read())
+    t = np.array(data["t"], dtype=float)
+    signal = np.array(data["signal"], dtype=float)
+    prediction = np.array(data["prediction"], dtype=float)
+    FH = forecast_horizon(signal, prediction, t, tol)
+    return i, j, rc, FH
 
-            FH_OECT[j, i] = forecast_horizon(OECT_signal, OECT_prediction, t, tol)
-            if k != "pinchoffs":
-                FH_tanh[j, i] = forecast_horizon(tanh_signal, tanh_prediction, t, tol)
-    d = {}
-    d["FH-OECT"] = FH_OECT.tolist()
-    if k != "pinchoffs":
-        d["FH-tanh"] = FH_tanh.tolist()
-    d["tolerance"] = tol
-    d["params"] = v.tolist()
-    s = json.dumps(d)
-    with open(new_f, "w") as file:
-        file.write(s)
+
+data_dir = "Data/Alpha/"
+var_name = "alpha"
+collected_fname = "Data/FH_vs_alpha.json"
+
+# get number of available cores
+n_processes = len(os.sched_getaffinity(0))
+print(f"Running on {n_processes} cores", flush=True)
+
+# forecast horizon tolerance
+tol = 5
+
+v_dict, r_dict = collect_parameters(data_dir)
+
+print(v_dict)
+print(r_dict)
+
+n_v = len(v_dict)
+n_r = len(r_dict)
+
+data = {}
+data[var_name] = list(v_dict)
+data["FH-OECT"] = np.zeros((n_v, n_r))
+data["FH-tanh"] = np.zeros((n_v, n_r))
+
+arglist = []
+for f in os.listdir(data_dir):
+    arglist.append((f, data_dir, v_dict, r_dict, tol))
+
+results = Parallel(n_jobs=n_processes)(delayed(get_data)(*arg) for arg in arglist)
+
+for i, j, rc, FH in results:
+    if rc == "OECT":
+        data["FH-OECT"][i, j] = FH
+    elif rc == "tanh":
+        data["FH-tanh"][i, j] = FH
+
+for key, val in data.items():
+    if not isinstance(val, list):
+        data[key] = val.tolist()
+
+datastring = json.dumps(data)
+
+with open(collected_fname, "w") as output_file:
+    output_file.write(datastring)
