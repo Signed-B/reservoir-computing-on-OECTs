@@ -5,6 +5,7 @@ from copy import deepcopy
 import numpy as np
 from joblib import Parallel, delayed
 from scipy.stats import norm, uniform
+import networkx as nx
 
 from src import *
 import json
@@ -36,8 +37,10 @@ def run_OECT_prediction(
     Vdinit, R, Rg, Cg, Vp, Kp, W, L = generate_OECT_parameters(n, parameters)
 
     A = erdos_renyi_network(n, p, r_dist)
+    while nx.is_connected(nx.Graph(A)):
+        A = erdos_renyi_network(n, p, r_dist)
 
-    w_in = input_layer(n, D, w_in_sigma)
+    w_in = input_layer(D, n, w_in_sigma)
 
     w_out, u0, r0, V1_0 = train_oect_reservoir(
         u0,
@@ -214,7 +217,7 @@ u0 = generate_initial_conditions(
     [-7.4, -11.1, 20],
     delta_dist,
     5000,
-    0.1,
+    0.0001,
     lorenz,
     sigma=10,
     rho=28,
@@ -234,6 +237,8 @@ for alpha in alphas:
                 r_dist,
                 deepcopy(parameters),
                 alpha,
+                training_time,
+                testing_time,
             )
         )
 

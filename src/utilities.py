@@ -28,7 +28,9 @@ def erdos_renyi_network(n, p, dist, Rg=None):
 
     # create the adjacency matrix from the resistor network
     S = np.divide(1, Rg) + np.divide(1, R).sum(axis=0)
-    return np.divide(1, S * R)
+    A = np.divide(1, S * R)
+    A[np.isnan(A)] = 0
+    return A
 
 
 def get_output_layer(r, signal, beta=0, solver="ridge"):

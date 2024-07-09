@@ -1,5 +1,6 @@
 joblib
-numpy
 matplotlib
+networkx
+numpy
 scipy
 seaborn
