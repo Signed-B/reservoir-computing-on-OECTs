@@ -36,33 +36,34 @@ def train_reservoir(u0, A, tmax, dt, w_in, alpha, function, tanshift, **args):
 
 
 def run_reservoir_autonomously(
-    u0, r, A, tmax, dt, w_in, w_out, function, tanshift, **args
+    u0, r0, A, tmax, dt, w_in, w_out, function, tanshift, **args
 ):
     n = A.shape[0]
     D = len(u0)
-    # adding to Z matrix to hold self-feedback states.
-    # Z = np.concatenate(Z, np.zeros(ntraining, n))
-
     T = round(tmax / dt)
-    Za = np.zeros((T, 2 * n))
-
-    v = np.dot(w_out, np.concatenate((r, np.square(r))))
 
     signal = np.zeros((T, D))
     prediction = np.zeros((T, D))
+    t = np.zeros(T)
 
-    for t in range(T):
-        Za[t] = np.concatenate((r, np.square(r)))  # reservoir states with trick
+    u = u0.copy()
+    r = r0.copy()
 
-        u += dt * function(u, t, **args)
+    z = np.concatenate((r, np.square(r)))
+    v = w_out.dot(z)
+
+    signal[0] = u
+    prediction[0] = v
+
+    for i in range(T - 1):
+        u += dt * function(u, t[i], **args)
 
         r = np.tanh(A.dot(r) + w_in.dot(v) + tanshift * np.ones(n))
+        z = np.concatenate((r, np.square(r)))
+        v = w_out.dot(z)  # get output using optimized output matrix w]
 
-        v = np.dot(
-            w_out, np.concatenate((r, np.square(r)))
-        )  # get output using optimized output matrix w]
-
-        signal[t] = u
-        prediction[t] = v
+        signal[i + 1] = u
+        prediction[i + 1] = v
+        t[i + 1] = t[i] + dt
 
     return signal, prediction
