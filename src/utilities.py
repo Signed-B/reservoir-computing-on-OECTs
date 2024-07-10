@@ -2,29 +2,38 @@ import random
 
 import numpy as np
 import scipy as sp
-from numpy.linalg import norm
+from numpy.linalg import norm as matrix_norm
 from scipy import sparse
 from scipy.stats import gamma
 from sklearn.linear_model import Ridge
+import warnings
+
+
+def input_layer(n, D, sigma):
+    return sigma * np.random.uniform(low=-1, high=1, size=(D, n))
 
 
 def erdos_renyi_network(n, p, dist, Rg=None):
-    # If it is not explicitly stated, we neglect the Rg term
-    if Rg is None:
-        Rg = np.inf * np.ones(n)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        # If it is not explicitly stated, we neglect the Rg term
+        if Rg is None:
+            Rg = np.inf * np.ones(n)
 
-    # generate the theoretical directed network
-    R = np.zeros((n, n))
-    for i in range(n):
-        for j in range(n):
-            if random.random() <= p and i != j:
-                R[i, j] = dist.rvs()
-            else:
-                R[i, j] = np.inf
+        # generate the theoretical directed network
+        R = np.zeros((n, n))
+        for i in range(n):
+            for j in range(n):
+                if random.random() <= p and i != j:
+                    R[i, j] = dist.rvs()
+                else:
+                    R[i, j] = np.inf
 
-    # create the adjacency matrix from the resistor network
-    S = np.divide(1, Rg) + np.divide(1, R).sum(axis=0)
-    return np.divide(1, S * R)
+        # create the adjacency matrix from the resistor network
+        S = np.divide(1, Rg) + np.divide(1, R).sum(axis=0)
+        A = np.divide(1, S * R)
+        A[np.isnan(A)] = 0
+        return A
 
 
 def get_output_layer(r, signal, beta=0, solver="ridge"):
@@ -67,8 +76,8 @@ def generate_OECT_parameters(n, parameters):
     stddev = parameters["channel-length"]["stddev"]
     L = gamma_distribution(n, mean, stddev**2)
 
-    mean = parameters["threshold-voltage"]["mean"]
-    stddev = parameters["threshold-voltage"]["stddev"]
+    mean = parameters["pinchoff-voltage"]["mean"]
+    stddev = parameters["pinchoff-voltage"]["stddev"]
     Vp = gamma_distribution(n, mean, stddev**2)
 
     mean = parameters["weighting-resistor"]["mean"]
@@ -100,5 +109,18 @@ def gamma_distribution(n, mean, variance):
 
 
 def forecast_horizon(signal, prediction, t, tol):
-    i = np.argmax(norm(signal - prediction, axis=1, ord=2) > tol)
+    i = np.argmax(matrix_norm(signal - prediction, axis=1, ord=2) > tol)
     return t[i]
+
+
+def generate_initial_conditions(n, u0, dist, relaxation_time, dt, function, **args):
+    D = len(u0)
+    ics = np.zeros((n, D))
+    for i in range(n):
+        u = u0.copy() + dist.rvs(size=D)
+        for t in range(relaxation_time):
+            u += dt * function(u, t, **args)
+
+        ics[i] = u
+
+    return ics

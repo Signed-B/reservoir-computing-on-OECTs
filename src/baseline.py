@@ -3,56 +3,67 @@ import numpy as np
 from .utilities import get_output_layer
 
 
-def train_reservoir(n, D, u, A, ntraining, dt, w_in, alpha, function, tanshift, **args):
+def train_reservoir(u0, A, tmax, dt, frac, w_in, alpha, function, tanshift, **args):
+    n = A.shape[0]
+    D = len(u0)
+    T = round(tmax / dt)
+
+    u = u0.copy()
+
     r = np.zeros(n)
+    X = np.zeros((T, D))  # to store x,y,z Lorenz coordinates
+    Z = np.zeros((T, 2 * n))
+    X[0] = u
 
-    X = np.zeros((ntraining, D))  # to store x,y,z Lorenz coordinates
-    Z = np.zeros((ntraining, 2 * n))
+    for t in range(T - 1):  # Training period
 
-    for t in range(ntraining):  # Training period
-
-        Z[t] = np.concatenate((r, np.square(r)))  # reservoir states with trick
+        Z[t + 1] = np.concatenate((r, np.square(r)))  # reservoir states with trick
 
         u += dt * function(u, t, **args)
 
         r = np.tanh(A.dot(r) + w_in.dot(u) + tanshift * np.ones(n))
 
-        X[t] = u  # store coordinates in X matrix
+        X[t + 1] = u  # store coordinates in X matrix
 
         # Could plot training period asw.
         # ye(t) = y # for plotting
         # ze(t) = z
         # xe(t) = x
 
-    w_out = get_output_layer(Z, X, alpha)
+    w_out = get_output_layer(Z[-round(frac * T) :], X[-round(frac * T) :], alpha)
 
     return w_out, u, r
 
 
 def run_reservoir_autonomously(
-    n, D, u, r, A, ntraining, ntesting, dt, w_in, w_out, function, tanshift, **args
+    u0, r0, A, tmax, dt, w_in, w_out, function, tanshift, **args
 ):
-    # adding to Z matrix to hold self-feedback states.
-    # Z = np.concatenate(Z, np.zeros(ntraining, n))
-    Za = np.zeros((ntraining, 2 * n))
+    n = A.shape[0]
+    D = len(u0)
+    T = round(tmax / dt)
 
-    v = np.dot(w_out, np.concatenate((r, np.square(r))))
+    signal = np.zeros((T, D))
+    prediction = np.zeros((T, D))
+    t = np.zeros(T)
 
-    signal_during_auto = np.zeros((ntesting, D))
-    pred_during_auto = np.zeros((ntesting, D))
+    u = u0.copy()
+    r = r0.copy()
 
-    for t in range(ntesting):
-        Za[t] = np.concatenate((r, np.square(r)))  # reservoir states with trick
+    z = np.concatenate((r, np.square(r)))
+    v = w_out.dot(z)
 
-        u += dt * function(u, t, **args)
+    signal[0] = u
+    prediction[0] = v
+
+    for i in range(T - 1):
+        u += dt * function(u, t[i], **args)
 
         r = np.tanh(A.dot(r) + w_in.dot(v) + tanshift * np.ones(n))
+        z = np.concatenate((r, np.square(r)))
+        v = w_out.dot(z)  # get output using optimized output matrix w]
 
-        v = np.dot(
-            w_out, np.concatenate((r, np.square(r)))
-        )  # get output using optimized output matrix w]
+        signal[i + 1] = u
+        prediction[i + 1] = v
+        t[i + 1] = t[i] + dt
 
-        signal_during_auto[t] = u
-        pred_during_auto[t] = v
-
-    return signal_during_auto, pred_during_auto
+    return t, signal, prediction

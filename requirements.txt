@@ -1,5 +1,6 @@
-numpy
+joblib
 matplotlib
+networkx
+numpy
 scipy
 seaborn
-tenacity
