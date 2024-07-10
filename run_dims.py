@@ -10,6 +10,8 @@ from scipy.stats import norm, uniform
 
 from src import *
 
+os.system("taskset -p 0xff %d" % os.getpid())
+
 
 
 def run_OECT_prediction(
@@ -181,13 +183,13 @@ for f in os.listdir(data_dir):
 n_processes = len(os.sched_getaffinity(0))
 print(f"Running on {n_processes} cores", flush=True)
 
-iterations = 10
+iterations = 2
 
 # reservoir_dims = [10, 25, 50, 100, 200, 300, 500, 1000]
 reservoir_dims = [10, 25, 50]
 
-training_time = 100
-testing_time = 100
+training_time = 10
+testing_time = 10
 dt = 0.01
 
 ntraining = int(training_time / dt)
@@ -265,7 +267,7 @@ for n in reservoir_dims:
     for i in range(iterations):
         arglist.append(
             (
-                f"Data/Alpha/{alpha}_{i}_tanh.json",
+                f"{data_dir}/{n}_{i}_tanh.json",
                 u0[i].copy(),
                 n,
                 6 / n,
