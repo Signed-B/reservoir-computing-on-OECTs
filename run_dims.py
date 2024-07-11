@@ -208,7 +208,6 @@ parameters["applied-drain-voltage"] = {"mean": -0.05, "stddev": 0}
 D = 3
 r_dist = uniform(100, 500)
 delta_dist = norm(scale=0.005)
-# p = 6 / n
 sigma = 10
 rho = 28
 beta = 8 / 3
