@@ -121,6 +121,8 @@ def run_tanh_prediction(
     u0 = u0.copy()
 
     A = erdos_renyi_network(n, p, r_dist)
+    while nx.is_connected(nx.Graph(A)):
+        A = erdos_renyi_network(n, p, r_dist)
 
     w_in = input_layer(D, n, w_in_sigma)
 
