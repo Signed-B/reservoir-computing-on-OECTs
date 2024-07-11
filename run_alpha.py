@@ -37,8 +37,6 @@ def run_OECT_prediction(
     Vdinit, R, Rg, Cg, Vp, Kp, W, L = generate_OECT_parameters(n, parameters)
 
     A = erdos_renyi_network(n, p, r_dist)
-    while nx.is_connected(nx.Graph(A)):
-        A = erdos_renyi_network(n, p, r_dist)
 
     w_in = input_layer(D, n, w_in_sigma)
 
@@ -179,7 +177,7 @@ n_processes = len(os.sched_getaffinity(0))
 print(f"Running on {n_processes} cores", flush=True)
 
 
-iterations = 10
+iterations = 100
 n = 100
 alphas = [1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
 

@@ -1,25 +1,122 @@
-import shelve
+import json
+import os
 import time
+from copy import deepcopy
 
+import networkx as nx
 import numpy as np
-from scipy.stats import uniform
+from joblib import Parallel, delayed
+from scipy.stats import norm, uniform
 
 from src import *
 
-output = "./Data/may8/pinchoffs_ensemble"
+
+def run_OECT_prediction(
+    fname,
+    u0,
+    n,
+    p,
+    r_dist,
+    parameters,
+    alpha,
+    training_time,
+    testing_time,
+):
+    dt = 0.01
+    frac = 1
+    w_in_sigma = 0.004
+
+    D = len(u0)
+    sigma = 10
+    rho = 28
+    beta = 8 / 3
+
+    u0 = u0.copy()
+
+    Vdinit, R, Rg, Cg, Vp, Kp, W, L = generate_OECT_parameters(n, parameters)
+
+    A = erdos_renyi_network(n, p, r_dist)
+
+    w_in = input_layer(D, n, w_in_sigma)
+
+    w_out, u0, r0, V1_0 = train_oect_reservoir(
+        u0,
+        training_time,
+        dt,
+        frac,
+        w_in,
+        A,
+        alpha,
+        Vdinit,
+        R,
+        Rg,
+        Cg,
+        Vp,
+        Kp,
+        W,
+        L,
+        lorenz,
+        sigma=sigma,
+        rho=rho,
+        beta=beta,
+    )
+
+    # print("\n")
+
+    t, signal, prediction = run_oect_reservoir_autonomously(
+        u0,
+        r0,
+        V1_0,
+        testing_time,
+        dt,
+        w_in,
+        w_out,
+        A,
+        Vdinit,
+        R,
+        Rg,
+        Cg,
+        Vp,
+        Kp,
+        W,
+        L,
+        lorenz,
+        sigma=sigma,
+        rho=rho,
+        beta=beta,
+    )
+
+    data = {}
+    data["t"] = t.tolist()
+    data["signal"] = signal.tolist()
+    data["prediction"] = prediction.tolist()
+
+    datastring = json.dumps(data)
+
+    with open(fname, "w") as output_file:
+        output_file.write(datastring)
+    print("Single run completed!", flush=True)
+
+
+# delete all previous data files
+data_dir = "Data/Pinchoffs"
+os.makedirs(data_dir, exist_ok=True)
+
+for f in os.listdir(data_dir):
+    os.remove(os.path.join(data_dir, f))
+
+# number of available cores
+n_processes = len(os.sched_getaffinity(0))
+print(f"Running on {n_processes} cores", flush=True)
 
 iterations = 2
 
-dim = 10
-# pinchoffs = [-.6, -.5, -.3, -.1, 0, .1, .3, .6]
-pinchoffs = [-0.3, 0, 0.3]
+n = 100
+pinchoffs = np.linspace(-1, 1, 21)
 
-training_time = 100
+training_time = 300
 testing_time = 100
 dt = 0.01
-
-ntraining = int(training_time / dt)
-ntesting = int(testing_time / dt)
 
 w_in_sigma = 0.004
 alpha = 0.00001
@@ -37,10 +134,21 @@ parameters["gate-capacitance"] = {"mean": gateC, "stddev": 0.1 * gateC}
 parameters["gate-resistance"] = {"mean": gateR, "stddev": 0.1 * gateR}
 parameters["applied-drain-voltage"] = {"mean": -0.05, "stddev": 0}
 
+
+def parameters_func(pinch):
+    params = deepcopy(parameters)
+    params["pinchoff-voltage"]["mean"] = pinch
+    return params
+
+
 # system
 D = 3
-dist = uniform(100, 500)
-
+r_dist = uniform(100, 500)
+delta_dist = norm(scale=0.005)
+p = 6 / n
+sigma = 10
+rho = 28
+beta = 8 / 3
 
 ensemble_results = []
 
@@ -50,129 +158,35 @@ print("run_pinchoff.py: BEGIN ENSEMBLE RUNS")
 
 initt = time.time()
 
-for iter in range(iterations):
-    print(f"========== Iteration {iter}/{iterations} ==========")
-    st = time.time()
+u0 = generate_initial_conditions(
+    iterations,
+    [-7.4, -11.1, 20],
+    delta_dist,
+    5000,
+    0.0001,
+    lorenz,
+    sigma=10,
+    rho=28,
+    beta=8 / 3,
+)
+print("Initial conditions generated!", flush=True)
 
-    # ==== OECT ====
-    # print("OECT data generation.")
-
-    OECT_signals = []
-    OECT_predictions = []
-
-    # parameters for lorenz
-    sigma = 10
-    rho = 28
-    beta = 8 / 3
-
-    x = -7.4
-    y = -11.1
-    z = 20
-    u = [x, y, z]
-
-    # relax to attractor
-    for t in range(5000):
-        u += dt * lorenz(u, t, sigma, rho, beta)
-
-    u0 = u.copy()
-
-    print("> Generating OECT data...")
-    for p in pinchoffs:
-        print("> Pinch", p)
-        n = dim
-
-        # OECT parameters
-        parameters["pinchoff-voltage"]["mean"] = p
-        Vdinit, R, Rg, Cg, Vp, Kp, W, L = generate_OECT_parameters(n, parameters)
-
-        A = erdos_renyi_network(n, 6 / n, dist)
-
-        w_in = input_layer(n, D, w_in_sigma)
-
-        w_out, u0, r0, V1_0 = train_oect_reservoir(
-            u0,
-            training_time,
-            dt,
-            w_in,
-            A,
-            alpha,
-            Vdinit,
-            R,
-            Rg,
-            Cg,
-            Vp,
-            Kp,
-            W,
-            L,
-            lorenz,
-            sigma=sigma,
-            rho=rho,
-            beta=beta,
+arglist = []
+for pinch in pinchoffs:
+    for i in range(iterations):
+        arglist.append(
+            (
+                f"{data_dir}/{pinch}_{i}_OECT.json",
+                u0[i].copy(),
+                n,
+                p,
+                r_dist,
+                deepcopy(parameters_func(pinch)),
+                alpha,
+                training_time,
+                testing_time,
+            )
         )
 
-        # print("\n")
 
-        signal, prediction = run_oect_reservoir_autonomously(
-            u0,
-            r0,
-            V1_0,
-            testing_time,
-            dt,
-            w_in,
-            w_out,
-            A,
-            Vdinit,
-            R,
-            Rg,
-            Cg,
-            Vp,
-            Kp,
-            W,
-            L,
-            lorenz,
-            sigma=sigma,
-            rho=rho,
-            beta=beta,
-        )
-
-        OECT_signals.append(signal)
-        OECT_predictions.append(prediction)
-
-    # ==== tanh ====
-    # print("Tanh data generation.")
-
-    tanh_signals = []
-    tanh_predictions = []
-
-    tanshift = 0
-
-    # parameters for lorenz
-    sigma = 10
-    rho = 28
-    beta = 8 / 3
-
-    x = -7.4
-    y = -11.1
-    z = 20
-    u = [x, y, z]
-
-    # relax to attractor
-    for t in range(5000):
-        u += dt * lorenz(u, t, sigma, rho, beta)
-
-    u0 = u.copy()
-
-    en_result = {"OECT_signals": OECT_signals, "OECT_predictions": OECT_predictions}
-
-    ensemble_results.append(en_result)
-
-    print(
-        f"> Time elapsed: {time.time() - st:.2f} s, total time: {time.time() - initt:.2f} s"
-    )
-
-# End Ensemble
-
-with shelve.open(f"{output}/data") as data:
-    data["dicts"] = ensemble_results
-    data["time"] = np.arange(0, testing_time, dt)
-    data["pinchoffs"] = pinchoffs
+Parallel(n_jobs=n_processes)(delayed(run_OECT_prediction)(*arg) for arg in arglist)

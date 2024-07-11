@@ -1,4 +1,5 @@
 import random
+import warnings
 
 import numpy as np
 import scipy as sp
@@ -6,7 +7,6 @@ from numpy.linalg import norm as matrix_norm
 from scipy import sparse
 from scipy.stats import gamma
 from sklearn.linear_model import Ridge
-import warnings
 
 
 def input_layer(n, D, sigma):
@@ -14,11 +14,9 @@ def input_layer(n, D, sigma):
 
 
 def erdos_renyi_network(n, p, dist, Rg=None):
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        # If it is not explicitly stated, we neglect the Rg term
-        if Rg is None:
-            Rg = np.inf * np.ones(n)
+    # If it is not explicitly stated, we neglect the Rg term
+    if Rg is None:
+        Rg = np.inf * np.ones(n)
 
         # generate the theoretical directed network
         R = np.zeros((n, n))
@@ -29,11 +27,13 @@ def erdos_renyi_network(n, p, dist, Rg=None):
                 else:
                     R[i, j] = np.inf
 
-        # create the adjacency matrix from the resistor network
-        S = np.divide(1, Rg) + np.divide(1, R).sum(axis=0)
+    # create the adjacency matrix from the resistor network
+    S = np.divide(1, Rg) + np.divide(1, R).sum(axis=0)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
         A = np.divide(1, S * R)
-        A[np.isnan(A)] = 0
-        return A
+    A[np.isnan(A)] = 0
+    return A
 
 
 def get_output_layer(r, signal, beta=0, solver="ridge"):
