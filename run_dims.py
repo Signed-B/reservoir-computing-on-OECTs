@@ -10,9 +10,6 @@ from scipy.stats import norm, uniform
 
 from src import *
 
-os.system("taskset -p 0xff %d" % os.getpid())
-
-
 
 def run_OECT_prediction(
         fname,
@@ -170,9 +167,6 @@ def run_tanh_prediction(
     print("Single run completed!", flush=True)
 
 
-
-
-
 data_dir = "Data/Dims"
 os.makedirs(data_dir, exist_ok=True)
 
@@ -183,20 +177,19 @@ for f in os.listdir(data_dir):
 n_processes = len(os.sched_getaffinity(0))
 print(f"Running on {n_processes} cores", flush=True)
 
-iterations = 2
+iterations = 100
 
-# reservoir_dims = [10, 25, 50, 100, 200, 300, 500, 1000]
-reservoir_dims = [10, 25, 50]
+reservoir_dims = [10, 20, 30, 40, 50, 100, 200, 300, 400, 500, 1000]
 
-training_time = 10
-testing_time = 10
+training_time = 300
+testing_time = 100
 dt = 0.01
 
 ntraining = int(training_time / dt)
 ntesting = int(testing_time / dt)
 
 w_in_sigma = 0.004
-alpha = 0.00001
+alpha = 1e-7
 
 gateR = 2.7e4
 gateC = 8.98e-7
@@ -227,7 +220,6 @@ print("run_dims.py: BEGIN ENSEMBLE RUNS")
 
 initt = time.time()
 
-# ics = [[-7.4, -11.1, 20] + np.random.normal(size=3) * 0.05 for _ in range(iterations)]
 u0 = generate_initial_conditions(
     iterations,
     [-7.4, -11.1, 20],

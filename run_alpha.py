@@ -179,7 +179,7 @@ n_processes = len(os.sched_getaffinity(0))
 print(f"Running on {n_processes} cores", flush=True)
 
 
-iterations = 10
+iterations = 100
 n = 100
 alphas = [1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
 
