@@ -1,66 +1,52 @@
-import shelve
+import json
+import os
 import time
+from copy import deepcopy
 
+import networkx as nx
 import numpy as np
-from scipy.stats import gamma, uniform
-from tenacity import retry, stop_after_attempt
+from joblib import Parallel, delayed
+from scipy.stats import norm, uniform
 
 from src import *
 
-output = "./Data/may8/sparse_ensemble"
 
-iterations = 10
+def run_OECT_prediction(
+    fname,
+    u0,
+    n,
+    p,
+    r_dist,
+    parameters,
+    alpha,
+    training_time,
+    testing_time,
+):
+    dt = 0.01
+    frac = 1
+    w_in_sigma = 0.004
 
-dim = 100
-# plist = [.01, .05, .1, .2, .3, .4, .5]
-plist = [0.005, 0.01, 0.05, 0.1, 0.2, 0.3]
+    D = len(u0)
+    sigma = 10
+    rho = 28
+    beta = 8 / 3
 
-training_time = 300  # training time/
-# training_time = 100
-testing_time = 100
-dt = 0.01
-
-ntraining = int(training_time / dt)
-ntesting = int(testing_time / dt)
-
-w_in_sigma = 0.004
-alpha = 0.00001
-
-gateR = 2.7e4
-gateC = 8.98e-7
-
-parameters = dict()
-parameters["transconductance"] = {"mean": 0.582e-3, "stddev": 0.0582e-3}
-parameters["channel-width"] = {"mean": 200e-6, "stddev": 0}
-parameters["channel-length"] = {"mean": 101e-6, "stddev": 0}
-parameters["pinchoff-voltage"] = {"mean": -0.6, "stddev": 0}  # pinch-off voltage
-parameters["weighting-resistor"] = {"mean": 500, "stddev": 100}
-parameters["gate-capacitance"] = {"mean": gateC, "stddev": 0.1 * gateC}
-parameters["gate-resistance"] = {"mean": gateR, "stddev": 0.1 * gateR}
-parameters["applied-drain-voltage"] = {"mean": -0.05, "stddev": 0}
-
-# system
-D = 3
-dist = uniform(100, 500)
-
-
-@retry(stop=stop_after_attempt(10))
-def oect_iteration(p):
-    n = dim
-    u0 = u.copy()
-    print("> p", p)
+    u0 = u0.copy()
 
     # OECT parameters
     Vdinit, R, Rg, Cg, Vp, Kp, W, L = generate_OECT_parameters(n, parameters)
 
-    A = erdos_renyi_network(n, p, dist)
+    A = erdos_renyi_network(n, p, r_dist)
+    while nx.is_connected(nx.Graph(A)):
+        A = erdos_renyi_network(n, p, r_dist)
 
-    w_in = w_in_sigma * (2.0 * np.random.rand(n, D) - np.ones((n, D)))
+    w_in = input_layer(D, n, w_in_sigma)
 
     w_out, u0, r0, V1_0 = train_oect_reservoir(
         u0,
         training_time,
         dt,
+        frac,
         w_in,
         A,
         alpha,
@@ -78,7 +64,7 @@ def oect_iteration(p):
         beta=beta,
     )
 
-    signal, prediction = run_oect_reservoir_autonomously(
+    t, signal, prediction = run_oect_reservoir_autonomously(
         u0,
         r0,
         V1_0,
@@ -101,131 +87,184 @@ def oect_iteration(p):
         beta=beta,
     )
 
-    return signal, prediction
+    data = {}
+    data["t"] = t.tolist()
+    data["signal"] = signal.tolist()
+    data["prediction"] = prediction.tolist()
+
+    datastring = json.dumps(data)
+
+    with open(fname, "w") as output_file:
+        output_file.write(datastring)
+    print("Single run completed!", flush=True)
 
 
-@retry(stop=stop_after_attempt(10))
-def tanh_iteration(p):
-    n = dim
-    u0 = u.copy()
-    print("connection probability", p)
+def run_tanh_prediction(
+    fname,
+    u0,
+    n,
+    p,
+    r_dist,
+    alpha,
+    training_time,
+    testing_time,
+):
+    dt = 0.01
+    frac = 1
+    w_in_sigma = 0.004
 
-    A = erdos_renyi_network(n, p, dist)
+    D = len(u0)
+    sigma = 10
+    rho = 28
+    beta = 8 / 3
 
-    w_in = input_layer(n, D, w_in_sigma)
+    u0 = u0.copy()
+
+    A = erdos_renyi_network(n, p, r_dist)
+
+    w_in = input_layer(D, n, w_in_sigma)
 
     ## train_reservoir
     w_out, u0, r = train_reservoir(
-        n,
-        D,
         u0,
         A,
-        ntraining,
+        training_time,
         dt,
+        frac,
         w_in,
         alpha,
         lorenz,
-        tanshift,
+        0,
         sigma=sigma,
         rho=rho,
         beta=beta,
     )
 
     ## Run reservoir autonomously.
-    signal_during_auto, pred_during_auto = run_reservoir_autonomously(
-        n,
-        D,
+    t, signal, prediction = run_reservoir_autonomously(
         u0,
         r,
         A,
-        ntraining,
-        ntesting,
+        testing_time,
         dt,
         w_in,
         w_out,
         lorenz,
-        tanshift,
+        0,
         sigma=sigma,
         rho=rho,
         beta=beta,
     )
+    data = {}
+    data["t"] = t.tolist()
+    data["signal"] = signal.tolist()
+    data["prediction"] = prediction.tolist()
 
-    return signal_during_auto, pred_during_auto
+    datastring = json.dumps(data)
+
+    with open(fname, "w") as output_file:
+        output_file.write(datastring)
+    print("Single run completed!", flush=True)
 
 
-if __name__ == "__main__":
-    ensemble_results = []
+data_dir = "Data/Sparsity"
+os.makedirs(data_dir, exist_ok=True)
 
-    # BEGIN ENSEMBLE RUNS
-    print("run_sparse.py: BEGIN ENSEMBLE RUNS")
+for f in os.listdir(data_dir):
+    os.remove(os.path.join(data_dir, f))
 
-    initt = time.time()
+# number of available cores
+n_processes = len(os.sched_getaffinity(0))
+print(f"Running on {n_processes} cores", flush=True)
 
-    ics = [
-        [-7.4, -11.1, 20] + np.random.normal(size=3) * 0.05 for _ in range(iterations)
-    ]
+iterations = 100
 
-    for iter in range(iterations):
-        print(f"========== Iteration {iter}/{iterations} ==========")
-        st = time.time()
+n = 100
+plist = np.logspace(-5, 0, 16)
 
-        # ==== OECT ====
-        # print("OECT data generation.")
-        # parameters for lorenz
-        sigma = 10
-        rho = 28
-        beta = 8 / 3
+training_time = 300
+testing_time = 100
+dt = 0.01
 
-        x = ics[iter][0]
-        y = ics[iter][1]
-        z = ics[iter][2]
-        u = [x, y, z]
+w_in_sigma = 0.004
+alpha = 1e-7
 
-        # relax to attractor
-        for t in range(5000):
-            u += dt * lorenz(u, t, sigma, rho, beta)
+gateR = 2.7e4
+gateC = 8.98e-7
 
-        OECT_signals = []
-        OECT_predictions = []
+parameters = dict()
+parameters["transconductance"] = {"mean": 0.582e-3, "stddev": 0.0582e-3}
+parameters["channel-width"] = {"mean": 200e-6, "stddev": 0}
+parameters["channel-length"] = {"mean": 101e-6, "stddev": 0}
+parameters["pinchoff-voltage"] = {"mean": -0.6, "stddev": 0}  # pinch-off voltage
+parameters["weighting-resistor"] = {"mean": 500, "stddev": 100}
+parameters["gate-capacitance"] = {"mean": gateC, "stddev": 0.1 * gateC}
+parameters["gate-resistance"] = {"mean": gateR, "stddev": 0.1 * gateR}
+parameters["applied-drain-voltage"] = {"mean": -0.05, "stddev": 0}
 
-        print("> Generating OECT data...")
-        for p in plist:
-            signal, prediction = oect_iteration(p)
+# system
+D = 3
+r_dist = uniform(100, 500)
+delta_dist = norm(scale=0.005)
+sigma = 10
+rho = 28
+beta = 8 / 3
 
-            OECT_signals.append(signal)
-            OECT_predictions.append(prediction)
+ensemble_results = []
 
-        # ==== tanh ====
-        # print("Tanh data generation.")
+# BEGIN ENSEMBLE RUNS
+print("run_dims.py: BEGIN ENSEMBLE RUNS")
 
-        tanh_signals = []
-        tanh_predictions = []
+initt = time.time()
 
-        tanshift = 0
+u0 = generate_initial_conditions(
+    iterations,
+    [-7.4, -11.1, 20],
+    delta_dist,
+    5000,
+    0.0001,
+    lorenz,
+    sigma=10,
+    rho=28,
+    beta=8 / 3,
+)
+print("Initial conditions generated!", flush=True)
 
-        print("> Generating tanh data...")
-        for p in plist:
-            signal_during_auto, pred_during_auto = tanh_iteration(p)
-
-            tanh_signals.append(signal_during_auto)
-            tanh_predictions.append(pred_during_auto)
-
-        en_result = {
-            "OECT_signals": OECT_signals,
-            "OECT_predictions": OECT_predictions,
-            "tanh_signals": tanh_signals,
-            "tanh_predictions": tanh_predictions,
-        }
-
-        ensemble_results.append(en_result)
-
-        print(
-            f"> Time elapsed: {time.time() - st:.2f} s, total time: {time.time() - initt:.2f} s"
+arglist = []
+for p in plist:
+    for i in range(iterations):
+        arglist.append(
+            (
+                f"{data_dir}/{p}_{i}_OECT.json",
+                u0[i].copy(),
+                n,
+                p,
+                r_dist,
+                deepcopy(parameters),
+                alpha,
+                training_time,
+                testing_time,
+            )
         )
 
-    # END ENSEMBLE
 
-    with shelve.open(f"{output}/data") as data:
-        data["dicts"] = ensemble_results
-        data["time"] = np.arange(0, testing_time, dt)
-        data["sparsities"] = plist
+Parallel(n_jobs=n_processes)(delayed(run_OECT_prediction)(*arg) for arg in arglist)
+
+
+arglist = []
+for p in plist:
+    for i in range(iterations):
+        arglist.append(
+            (
+                f"{data_dir}/{p}_{i}_tanh.json",
+                u0[i].copy(),
+                n,
+                p,
+                r_dist,
+                alpha,
+                training_time,
+                testing_time,
+            )
+        )
+
+Parallel(n_jobs=n_processes)(delayed(run_tanh_prediction)(*arg) for arg in arglist)
