@@ -12,15 +12,15 @@ from src import *
 
 
 def run_OECT_prediction(
-        fname,
-        u0,
-        n,
-        p,
-        r_dist,
-        parameters,
-        alpha,
-        training_time,
-        testing_time,
+    fname,
+    u0,
+    n,
+    p,
+    r_dist,
+    parameters,
+    alpha,
+    training_time,
+    testing_time,
 ):
     dt = 0.01
     frac = 1

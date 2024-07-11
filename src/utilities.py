@@ -1,4 +1,5 @@
 import random
+import warnings
 
 import numpy as np
 import scipy as sp
@@ -6,7 +7,6 @@ from numpy.linalg import norm as matrix_norm
 from scipy import sparse
 from scipy.stats import gamma
 from sklearn.linear_model import Ridge
-import warnings
 
 
 def input_layer(n, D, sigma):

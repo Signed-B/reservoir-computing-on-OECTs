@@ -10,8 +10,9 @@ from scipy.stats import norm, uniform
 
 from src import *
 
+
 def run_OECT_prediction(
-    fname, 
+    fname,
     u0,
     n,
     p,
@@ -33,10 +34,8 @@ def run_OECT_prediction(
     u0 = u0.copy()
 
     Vdinit, R, Rg, Cg, Vp, Kp, W, L = generate_OECT_parameters(n, parameters)
-    
+
     A = erdos_renyi_network(n, p, r_dist)
-    while nx.is_connected(nx.Graph(A)):
-        A = erdos_renyi_network(n, p, r_dist)
 
     w_in = input_layer(D, n, w_in_sigma)
 
@@ -98,75 +97,6 @@ def run_OECT_prediction(
         output_file.write(datastring)
     print("Single run completed!", flush=True)
 
-def run_tanh_prediction(
-    fname,
-    u0,
-    n,
-    p,
-    r_dist,
-    alpha,
-    training_time,
-    testing_time,
-):
-    dt = 0.01
-    frac = 1
-    w_in_sigma = 0.004
-
-    D = len(u0)
-    sigma = 10
-    rho = 28
-    beta = 8 / 3
-
-    u0 = u0.copy()
-
-    A = erdos_renyi_network(n, p, r_dist)
-    while nx.is_connected(nx.Graph(A)):
-        A = erdos_renyi_network(n, p, r_dist)
-
-    w_in = input_layer(D, n, w_in_sigma)
-
-    ## train_reservoir
-    w_out, u0, r = train_reservoir(
-        u0,
-        A,
-        training_time,
-        dt,
-        frac,
-        w_in,
-        alpha,
-        lorenz,
-        0,
-        sigma=sigma,
-        rho=rho,
-        beta=beta,
-    )
-
-    ## Run reservoir autonomously.
-    t, signal, prediction = run_reservoir_autonomously(
-        u0,
-        r,
-        A,
-        testing_time,
-        dt,
-        w_in,
-        w_out,
-        lorenz,
-        0,
-        sigma=sigma,
-        rho=rho,
-        beta=beta,
-    )
-    data = {}
-    data["t"] = t.tolist()
-    data["signal"] = signal.tolist()
-    data["prediction"] = prediction.tolist()
-
-    datastring = json.dumps(data)
-
-    with open(fname, "w") as output_file:
-        output_file.write(datastring)
-    print("Single run completed!", flush=True)
-
 
 # delete all previous data files
 data_dir = "Data/Pinchoffs"
@@ -182,7 +112,7 @@ print(f"Running on {n_processes} cores", flush=True)
 iterations = 2
 
 n = 100
-pinchoffs = [-.6, -.5, -.3, -.1, 0, .1, .3, .6]
+pinchoffs = np.linspace(-1, 1, 21)
 
 training_time = 300
 testing_time = 100
@@ -203,6 +133,7 @@ parameters["weighting-resistor"] = {"mean": 500, "stddev": 100}
 parameters["gate-capacitance"] = {"mean": gateC, "stddev": 0.1 * gateC}
 parameters["gate-resistance"] = {"mean": gateR, "stddev": 0.1 * gateR}
 parameters["applied-drain-voltage"] = {"mean": -0.05, "stddev": 0}
+
 
 def parameters_func(pinch):
     params = deepcopy(parameters)
