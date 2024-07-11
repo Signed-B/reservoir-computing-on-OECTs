@@ -259,27 +259,3 @@ for pinch in pinchoffs:
 
 
 Parallel(n_jobs=n_processes)(delayed(run_OECT_prediction)(*arg) for arg in arglist)
-
-
-# Unnecessary due to no pinchoff change.
-
-# arglist = []
-# for pinch in pinchoffs:
-#     for i in range(iterations):
-#         arglist.append(
-#             (
-#                 f"{data_dir}/{pinch}_{i}_tanh.json",
-#                 u0[i].copy(),
-#                 n,
-#                 p,
-#                 r_dist,
-#                 alpha,
-#                 training_time,
-#                 testing_time,
-#             )
-#         )
-
-# Parallel(n_jobs=n_processes)(delayed(run_tanh_prediction)(*arg) for arg in arglist)
-
-
-

@@ -14,19 +14,18 @@ def input_layer(n, D, sigma):
 
 
 def erdos_renyi_network(n, p, dist, Rg=None):
-   
     # If it is not explicitly stated, we neglect the Rg term
     if Rg is None:
         Rg = np.inf * np.ones(n)
 
-    # generate the theoretical directed network
-    R = np.zeros((n, n))
-    for i in range(n):
-        for j in range(n):
-            if random.random() <= p and i != j:
-                R[i, j] = dist.rvs()
-            else:
-                R[i, j] = np.inf
+        # generate the theoretical directed network
+        R = np.zeros((n, n))
+        for i in range(n):
+            for j in range(n):
+                if random.random() <= p and i != j:
+                    R[i, j] = dist.rvs()
+                else:
+                    R[i, j] = np.inf
 
     # create the adjacency matrix from the resistor network
     S = np.divide(1, Rg) + np.divide(1, R).sum(axis=0)
