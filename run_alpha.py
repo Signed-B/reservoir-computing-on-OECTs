@@ -190,7 +190,6 @@ alphas = [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
 
 training_time = 300  # training time/
 testing_time = 100
-dt = 0.01
 
 w_in_sigma = 0.004
 
