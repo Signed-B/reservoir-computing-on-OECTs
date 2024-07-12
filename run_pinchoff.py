@@ -39,52 +39,59 @@ def run_OECT_prediction(
 
     w_in = input_layer(D, n, w_in_sigma)
 
-    w_out, u0, r0, V1_0 = train_oect_reservoir(
-        u0,
-        training_time,
-        dt,
-        frac,
-        w_in,
-        A,
-        alpha,
-        Vdinit,
-        R,
-        Rg,
-        Cg,
-        Vp,
-        Kp,
-        W,
-        L,
-        lorenz,
-        sigma=sigma,
-        rho=rho,
-        beta=beta,
-    )
+    try:
+        w_out, u0, r0, V1_0 = train_oect_reservoir(
+            u0,
+            training_time,
+            dt,
+            frac,
+            w_in,
+            A,
+            alpha,
+            Vdinit,
+            R,
+            Rg,
+            Cg,
+            Vp,
+            Kp,
+            W,
+            L,
+            lorenz,
+            sigma=sigma,
+            rho=rho,
+            beta=beta,
+        )
 
-    # print("\n")
+        # print("\n")
 
-    t, signal, prediction = run_oect_reservoir_autonomously(
-        u0,
-        r0,
-        V1_0,
-        testing_time,
-        dt,
-        w_in,
-        w_out,
-        A,
-        Vdinit,
-        R,
-        Rg,
-        Cg,
-        Vp,
-        Kp,
-        W,
-        L,
-        lorenz,
-        sigma=sigma,
-        rho=rho,
-        beta=beta,
-    )
+        t, signal, prediction = run_oect_reservoir_autonomously(
+            u0,
+            r0,
+            V1_0,
+            testing_time,
+            dt,
+            w_in,
+            w_out,
+            A,
+            Vdinit,
+            R,
+            Rg,
+            Cg,
+            Vp,
+            Kp,
+            W,
+            L,
+            lorenz,
+            sigma=sigma,
+            rho=rho,
+            beta=beta,
+        )
+    except ValueError:
+        D = len(u0)
+        T = int(testing_time)
+        t = np.nan*np.ones(T)
+        signal = np.nan*np.ones((T, D))
+        prediction = np.nan*np.ones((T, D))
 
     data = {}
     data["t"] = t.tolist()
