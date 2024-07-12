@@ -41,25 +41,32 @@ def get_data(f, dir, v_dict, r_dict, tol):
     t = np.array(data["t"], dtype=float)
     signal = np.array(data["signal"], dtype=float)
     prediction = np.array(data["prediction"], dtype=float)
-    FH = forecast_horizon(signal, prediction, t, tol)
+    try:
+        FH = forecast_horizon(signal, prediction, t, tol)
+    except ValueError:
+        FH = np.nan
     return i, j, rc, FH
 
 
 data_name = "dims"
 
-data_dir = {
+data_dir_dict = {
     "alpha": "Data/Alpha",
     "dims": "Data/Dims",
     "sparsity": "Data/Sparsity",
     "pinchoff": "Data/Pinchoffs",
 }
-var_name = {"alpha": "alpha", "dims": "n", "sparsity": "p", "pinchoff": "pinchoff"}
-collected_fname = {
+var_name_dict = {"alpha": "alpha", "dims": "n", "sparsity": "p", "pinchoff": "pinchoff"}
+collected_fname_dict = {
     "alpha": "Data/FH_vs_alpha.json",
     "dims": "Data/FH_vs_n.json",
     "sparsity": "Data/FH_vs_p.json",
     "pinchoff": "Data/FH_vs_pinchoff.json",
 }
+
+data_dir = data_dir_dict[data_name]
+var_name = var_name_dict[data_name]
+collected_fname = collected_fname_dict[data_name]
 
 # get number of available cores
 n_processes = len(os.sched_getaffinity(0))
@@ -77,12 +84,12 @@ n_v = len(v_dict)
 n_r = len(r_dict)
 
 data = {}
-data[var_name[data_name]] = list(v_dict)
+data[var_name] = list(v_dict)
 data["FH-OECT"] = np.zeros((n_v, n_r))
 data["FH-tanh"] = np.zeros((n_v, n_r))
 
 arglist = []
-for f in os.listdir(data_dir[data_name]):
+for f in os.listdir(data_dir):
     arglist.append((f, data_dir, v_dict, r_dict, tol))
 
 results = Parallel(n_jobs=n_processes)(delayed(get_data)(*arg) for arg in arglist)
@@ -99,5 +106,5 @@ for key, val in data.items():
 
 datastring = json.dumps(data)
 
-with open(collected_fname[data_name], "w") as output_file:
+with open(collected_fname, "w") as output_file:
     output_file.write(datastring)
