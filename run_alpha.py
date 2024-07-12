@@ -186,7 +186,7 @@ print(f"Running on {n_processes} cores", flush=True)
 
 iterations = 100
 n = 100
-alphas = [1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
+alphas = [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
 
 training_time = 300  # training time/
 testing_time = 100
