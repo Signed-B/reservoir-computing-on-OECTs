@@ -77,12 +77,12 @@ n_v = len(v_dict)
 n_r = len(r_dict)
 
 data = {}
-data[var_name] = list(v_dict)
+data[var_name[data_name]] = list(v_dict)
 data["FH-OECT"] = np.zeros((n_v, n_r))
 data["FH-tanh"] = np.zeros((n_v, n_r))
 
 arglist = []
-for f in os.listdir(data_dir):
+for f in os.listdir(data_dir[data_name]):
     arglist.append((f, data_dir, v_dict, r_dict, tol))
 
 results = Parallel(n_jobs=n_processes)(delayed(get_data)(*arg) for arg in arglist)
@@ -99,5 +99,5 @@ for key, val in data.items():
 
 datastring = json.dumps(data)
 
-with open(collected_fname, "w") as output_file:
+with open(collected_fname[data_name], "w") as output_file:
     output_file.write(datastring)
