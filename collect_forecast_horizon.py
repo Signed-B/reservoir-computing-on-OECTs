@@ -45,9 +45,21 @@ def get_data(f, dir, v_dict, r_dict, tol):
     return i, j, rc, FH
 
 
-data_dir = "Data/Alpha/"
-var_name = "alpha"
-collected_fname = "Data/FH_vs_alpha.json"
+data_name = "dims"
+
+data_dir = {
+    "alpha": "Data/Alpha",
+    "dims": "Data/Dims",
+    "sparsity": "Data/Sparsity",
+    "pinchoff": "Data/Pinchoffs",
+}
+var_name = {"alpha": "alpha", "dims": "n", "sparsity": "p", "pinchoff": "pinchoff"}
+collected_fname = {
+    "alpha": "Data/FH_vs_alpha.json",
+    "dims": "Data/FH_vs_n.json",
+    "sparsity": "Data/FH_vs_p.json",
+    "pinchoff": "Data/FH_vs_pinchoff.json",
+}
 
 # get number of available cores
 n_processes = len(os.sched_getaffinity(0))
