@@ -90,9 +90,9 @@ def run_OECT_prediction(
     except ValueError:
         D = len(u0)
         T = int(testing_time)
-        t = np.nan*np.ones(T)
-        signal = np.nan*np.ones((T, D))
-        prediction = np.nan*np.ones((T, D))
+        t = np.nan * np.ones(T)
+        signal = np.nan * np.ones((T, D))
+        prediction = np.nan * np.ones((T, D))
 
     data = {}
     data["t"] = t.tolist()

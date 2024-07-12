@@ -89,9 +89,9 @@ def run_OECT_prediction(
     except ValueError:
         D = len(u0)
         T = int(testing_time)
-        t = np.nan*np.ones(T)
-        signal = np.nan*np.ones((T, D))
-        prediction = np.nan*np.ones((T, D))
+        t = np.nan * np.ones(T)
+        signal = np.nan * np.ones((T, D))
+        prediction = np.nan * np.ones((T, D))
 
     data = {}
     data["t"] = t.tolist()
@@ -116,7 +116,7 @@ for f in os.listdir(data_dir):
 n_processes = len(os.sched_getaffinity(0))
 print(f"Running on {n_processes} cores", flush=True)
 
-iterations = 2
+iterations = 100
 
 n = 100
 pinchoffs = np.linspace(-1, 1, 21)
@@ -126,7 +126,7 @@ testing_time = 100
 dt = 0.01
 
 w_in_sigma = 0.004
-alpha = 0.00001
+alpha = 1e-7
 
 gateR = 2.7e4
 gateC = 8.98e-7
