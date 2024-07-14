@@ -123,7 +123,6 @@ pinchoffs = np.linspace(-1, 1, 21)
 
 training_time = 300
 testing_time = 100
-dt = 0.01
 
 w_in_sigma = 0.004
 alpha = 1e-7
@@ -142,7 +141,7 @@ parameters["gate-resistance"] = {"mean": gateR, "stddev": 0.1 * gateR}
 parameters["applied-drain-voltage"] = {"mean": -0.05, "stddev": 0}
 
 
-def parameters_func(pinch):
+def parameters_func(parameters, pinch):
     params = deepcopy(parameters)
     params["pinchoff-voltage"]["mean"] = pinch
     return params
@@ -188,7 +187,7 @@ for pinch in pinchoffs:
                 n,
                 p,
                 r_dist,
-                deepcopy(parameters_func(pinch)),
+                deepcopy(parameters_func(parameters, pinch)),
                 alpha,
                 training_time,
                 testing_time,

@@ -195,13 +195,12 @@ w_in_sigma = 0.004
 
 gateR = 2.7e4
 gateC = 8.98e-7
-pinchoff = -0.6
 
 parameters = dict()
 parameters["transconductance"] = {"mean": 0.582e-3, "stddev": 0.0582e-3}
 parameters["channel-width"] = {"mean": 200e-6, "stddev": 0}
 parameters["channel-length"] = {"mean": 101e-6, "stddev": 0}
-parameters["pinchoff-voltage"] = {"mean": pinchoff, "stddev": 0}  # pinch-off voltage
+parameters["pinchoff-voltage"] = {"mean": -0.6, "stddev": 0}  # pinch-off voltage
 parameters["weighting-resistor"] = {"mean": 500, "stddev": 100}
 parameters["gate-capacitance"] = {"mean": gateC, "stddev": 0.1 * gateC}
 parameters["gate-resistance"] = {"mean": gateR, "stddev": 0.1 * gateR}

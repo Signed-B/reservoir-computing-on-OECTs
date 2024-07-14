@@ -187,11 +187,10 @@ print(f"Running on {n_processes} cores", flush=True)
 iterations = 100
 
 n = 100
-plist = np.logspace(-5, 0, 16)
+plist = np.logspace(-3, 0, 16)
 
 training_time = 300
 testing_time = 100
-dt = 0.01
 
 w_in_sigma = 0.004
 alpha = 1e-7

@@ -190,10 +190,6 @@ reservoir_dims = [10, 20, 30, 40, 50, 100, 200, 300, 400, 500, 1000]
 
 training_time = 300
 testing_time = 100
-dt = 0.01
-
-ntraining = int(training_time / dt)
-ntesting = int(testing_time / dt)
 
 w_in_sigma = 0.004
 alpha = 1e-7
