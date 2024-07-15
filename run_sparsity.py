@@ -36,9 +36,10 @@ def run_OECT_prediction(
     # OECT parameters
     Vdinit, R, Rg, Cg, Vp, Kp, W, L = generate_OECT_parameters(n, parameters)
 
+    st = time.time()
     A = erdos_renyi_network(n, p, r_dist)
-    while nx.is_connected(nx.Graph(A)):
-        A = erdos_renyi_network(n, p, r_dist)
+    # while nx.is_connected(nx.Graph(A)):
+        # A = erdos_renyi_network(n, p, r_dist)
 
     w_in = input_layer(D, n, w_in_sigma)
 
@@ -184,10 +185,10 @@ for f in os.listdir(data_dir):
 n_processes = len(os.sched_getaffinity(0))
 print(f"Running on {n_processes} cores", flush=True)
 
-iterations = 100
+iterations = 10
 
 n = 100
-plist = np.logspace(-3, 0, 16)
+plist = np.logspace(-5, 0, 16)
 
 training_time = 300
 testing_time = 100
@@ -252,7 +253,7 @@ for p in plist:
             )
         )
 
-
+print("Running", len(arglist), "OECT jobs.", flush=True)
 Parallel(n_jobs=n_processes)(delayed(run_OECT_prediction)(*arg) for arg in arglist)
 
 
@@ -272,4 +273,5 @@ for p in plist:
             )
         )
 
+print("Running", len(arglist), "tanh jobs.", flush=True)
 Parallel(n_jobs=n_processes)(delayed(run_tanh_prediction)(*arg) for arg in arglist)
