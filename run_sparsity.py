@@ -24,7 +24,7 @@ def run_OECT_prediction(
 ):
     dt = 0.01
     frac = 1
-    w_in_sigma = 0.004
+    w_in_sigma = 1e-3
 
     D = len(u0)
     sigma = 10
@@ -118,7 +118,7 @@ def run_tanh_prediction(
 ):
     dt = 0.01
     frac = 1
-    w_in_sigma = 0.004
+    w_in_sigma = 1e-3
 
     D = len(u0)
     sigma = 10
@@ -192,8 +192,7 @@ plist = np.logspace(-3, 0, 16)
 training_time = 300
 testing_time = 100
 
-w_in_sigma = 1e-3
-alpha = 1e-6
+alpha = 1e-7
 
 gateR = 2.7e4
 gateC = 8.98e-7

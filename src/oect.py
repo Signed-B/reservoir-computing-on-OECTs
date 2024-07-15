@@ -66,6 +66,9 @@ def train_oect_reservoir(
         r[t + 1] = Vd
 
         X[t] = u  # store coordinates in X matrix
+    if np.any(np.isnan(r)):
+        raise ValueError("There are NaN values in the reservoir states!")
+
     w_out = get_output_layer(r[-round(frac * T) :], X[-round(frac * T) :], alpha)
     return w_out, u, r[-1], V1
 
