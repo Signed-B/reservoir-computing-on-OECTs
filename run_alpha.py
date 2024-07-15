@@ -191,7 +191,7 @@ alphas = [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
 training_time = 300  # training time/
 testing_time = 100
 
-w_in_sigma = 0.004
+w_in_sigma = 1e-3
 
 gateR = 2.7e4
 gateC = 8.98e-7
@@ -209,7 +209,7 @@ parameters["applied-drain-voltage"] = {"mean": -0.05, "stddev": 0}
 # system
 D = 3
 r_dist = uniform(100, 500)
-delta_dist = norm(scale=0.005)
+delta_dist = norm(scale=0.1)
 p = 6 / n
 sigma = 10
 rho = 28
@@ -220,14 +220,12 @@ ensemble_results = []
 # BEGIN ENSEMBLE RUNS
 print("run_alpha.py: BEGIN ENSEMBLE RUNS")
 
-initt = time.time()
-
 u0 = generate_initial_conditions(
     iterations,
     [-7.4, -11.1, 20],
     delta_dist,
-    5000,
-    0.0001,
+    10,
+    1e-4,
     lorenz,
     sigma=10,
     rho=28,
