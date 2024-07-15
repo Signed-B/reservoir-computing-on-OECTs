@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 
 import numpy as np
 from joblib import Parallel, delayed
@@ -48,7 +49,7 @@ def get_data(f, dir, v_dict, r_dict, tol):
     return i, j, rc, FH
 
 
-data_name = "dims"
+data_name = sys.argv[1]
 
 data_dir_dict = {
     "alpha": "Data/Alpha",
