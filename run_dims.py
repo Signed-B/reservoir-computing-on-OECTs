@@ -24,7 +24,7 @@ def run_OECT_prediction(
 ):
     dt = 0.01
     frac = 1
-    w_in_sigma = 0.004
+    w_in_sigma = 1e-3
 
     D = len(u0)
     sigma = 10
@@ -118,7 +118,7 @@ def run_tanh_prediction(
 ):
     dt = 0.01
     frac = 1
-    w_in_sigma = 0.004
+    w_in_sigma = 1e-3
 
     D = len(u0)
     sigma = 10
@@ -190,12 +190,7 @@ reservoir_dims = [10, 20, 30, 40, 50, 100, 200, 300, 400, 500, 1000]
 
 training_time = 300
 testing_time = 100
-dt = 0.01
 
-ntraining = int(training_time / dt)
-ntesting = int(testing_time / dt)
-
-w_in_sigma = 0.004
 alpha = 1e-7
 
 gateR = 2.7e4
@@ -214,7 +209,7 @@ parameters["applied-drain-voltage"] = {"mean": -0.05, "stddev": 0}
 # system
 D = 3
 r_dist = uniform(100, 500)
-delta_dist = norm(scale=0.005)
+delta_dist = norm(scale=0.1)
 sigma = 10
 rho = 28
 beta = 8 / 3
@@ -224,14 +219,12 @@ ensemble_results = []
 # BEGIN ENSEMBLE RUNS
 print("run_dims.py: BEGIN ENSEMBLE RUNS")
 
-initt = time.time()
-
 u0 = generate_initial_conditions(
     iterations,
     [-7.4, -11.1, 20],
     delta_dist,
-    5000,
-    0.0001,
+    10,
+    1e-4,
     lorenz,
     sigma=10,
     rho=28,

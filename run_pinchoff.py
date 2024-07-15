@@ -24,7 +24,7 @@ def run_OECT_prediction(
 ):
     dt = 0.01
     frac = 1
-    w_in_sigma = 0.004
+    w_in_sigma = 1e-3
 
     D = len(u0)
     sigma = 10
@@ -61,8 +61,6 @@ def run_OECT_prediction(
             rho=rho,
             beta=beta,
         )
-
-        # print("\n")
 
         t, signal, prediction = run_oect_reservoir_autonomously(
             u0,
@@ -123,9 +121,7 @@ pinchoffs = np.linspace(-1, 1, 21)
 
 training_time = 300
 testing_time = 100
-dt = 0.01
 
-w_in_sigma = 0.004
 alpha = 1e-7
 
 gateR = 2.7e4
@@ -142,7 +138,7 @@ parameters["gate-resistance"] = {"mean": gateR, "stddev": 0.1 * gateR}
 parameters["applied-drain-voltage"] = {"mean": -0.05, "stddev": 0}
 
 
-def parameters_func(pinch):
+def parameters_func(parameters, pinch):
     params = deepcopy(parameters)
     params["pinchoff-voltage"]["mean"] = pinch
     return params
@@ -151,7 +147,7 @@ def parameters_func(pinch):
 # system
 D = 3
 r_dist = uniform(100, 500)
-delta_dist = norm(scale=0.005)
+delta_dist = norm(scale=0.1)
 p = 6 / n
 sigma = 10
 rho = 28
@@ -169,8 +165,8 @@ u0 = generate_initial_conditions(
     iterations,
     [-7.4, -11.1, 20],
     delta_dist,
-    5000,
-    0.0001,
+    10,
+    1e-4,
     lorenz,
     sigma=10,
     rho=28,
@@ -188,7 +184,7 @@ for pinch in pinchoffs:
                 n,
                 p,
                 r_dist,
-                deepcopy(parameters_func(pinch)),
+                deepcopy(parameters_func(parameters, pinch)),
                 alpha,
                 training_time,
                 testing_time,

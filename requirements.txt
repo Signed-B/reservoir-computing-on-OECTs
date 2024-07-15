@@ -2,5 +2,6 @@ joblib
 matplotlib
 networkx
 numpy
+scikit-learn
 scipy
 seaborn

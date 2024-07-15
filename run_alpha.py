@@ -24,7 +24,7 @@ def run_OECT_prediction(
 ):
     dt = 0.01
     frac = 1
-    w_in_sigma = 0.004
+    w_in_sigma = 1e-3
 
     D = len(u0)
     sigma = 10
@@ -116,7 +116,7 @@ def run_tanh_prediction(
 ):
     dt = 0.01
     frac = 1
-    w_in_sigma = 0.004
+    w_in_sigma = 1e-3
 
     D = len(u0)
     sigma = 10
@@ -186,23 +186,19 @@ print(f"Running on {n_processes} cores", flush=True)
 
 iterations = 100
 n = 100
-alphas = [1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
+alphas = [1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
 
 training_time = 300  # training time/
 testing_time = 100
-dt = 0.01
-
-w_in_sigma = 0.004
 
 gateR = 2.7e4
 gateC = 8.98e-7
-pinchoff = -0.6
 
 parameters = dict()
 parameters["transconductance"] = {"mean": 0.582e-3, "stddev": 0.0582e-3}
 parameters["channel-width"] = {"mean": 200e-6, "stddev": 0}
 parameters["channel-length"] = {"mean": 101e-6, "stddev": 0}
-parameters["pinchoff-voltage"] = {"mean": pinchoff, "stddev": 0}  # pinch-off voltage
+parameters["pinchoff-voltage"] = {"mean": -0.6, "stddev": 0}  # pinch-off voltage
 parameters["weighting-resistor"] = {"mean": 500, "stddev": 100}
 parameters["gate-capacitance"] = {"mean": gateC, "stddev": 0.1 * gateC}
 parameters["gate-resistance"] = {"mean": gateR, "stddev": 0.1 * gateR}
@@ -211,7 +207,7 @@ parameters["applied-drain-voltage"] = {"mean": -0.05, "stddev": 0}
 # system
 D = 3
 r_dist = uniform(100, 500)
-delta_dist = norm(scale=0.005)
+delta_dist = norm(scale=0.1)
 p = 6 / n
 sigma = 10
 rho = 28
@@ -222,14 +218,12 @@ ensemble_results = []
 # BEGIN ENSEMBLE RUNS
 print("run_alpha.py: BEGIN ENSEMBLE RUNS")
 
-initt = time.time()
-
 u0 = generate_initial_conditions(
     iterations,
     [-7.4, -11.1, 20],
     delta_dist,
-    5000,
-    0.0001,
+    10,
+    1e-4,
     lorenz,
     sigma=10,
     rho=28,

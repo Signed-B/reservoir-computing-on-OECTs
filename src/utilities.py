@@ -113,13 +113,15 @@ def forecast_horizon(signal, prediction, t, tol):
     return t[i]
 
 
-def generate_initial_conditions(n, u0, dist, relaxation_time, dt, function, **args):
+def generate_initial_conditions(n, u0, dist, T, dt, function, **args):
     D = len(u0)
     ics = np.zeros((n, D))
     for i in range(n):
         u = u0.copy() + dist.rvs(size=D)
-        for t in range(relaxation_time):
+        t = 0
+        while t < T:
             u += dt * function(u, t, **args)
+            t += dt
 
         ics[i] = u
 
