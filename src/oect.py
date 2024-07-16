@@ -216,7 +216,7 @@ def run_oect_reservoir_autonomously(
 
     Returns
     -------
-    A tuple
+    tuple
         t : np.array
             The times at which the signal is output
         signal : np.array
