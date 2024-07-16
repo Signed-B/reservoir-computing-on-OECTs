@@ -53,11 +53,11 @@ def update_drain_voltage(Vd, Vg, V1, Vdinit, R, Rg, Vp, Kp, W, L):
 
 def train_oect_reservoir(
     u0,
+    w_in,
+    A,
     tmax,
     dt,
     frac,
-    w_in,
-    A,
     alpha,
     Vdinit,
     R,
@@ -76,16 +76,16 @@ def train_oect_reservoir(
     ----------
     u0 : np.array
         The initial condition of the dynamical system
+    w_in : np.array
+        The input layer
+    A : np.array
+        A weighted matrix specifying the effective adjacency matrix.
     tmax : float
         The time for which to train the reservoir computer
     dt : float > 0
         The time step to take with the reservoir and the ODE solver
     frac : int between 0 and 1
         The fraction f to train the reservoir (discarding the beginning of the time series)
-    w_in : np.array
-        The input layer
-    A : np.array
-        A weighted matrix specifying the effective adjacency matrix.
     alpha : float
         The ridge regression parameter
     Vdinit : np.array
@@ -159,11 +159,11 @@ def run_oect_reservoir_autonomously(
     u0,
     r0,
     V1_0,
-    tmax,
-    dt,
     w_in,
     w_out,
     A,
+    tmax,
+    dt,
     Vdinit,
     R,
     Rg,
@@ -185,16 +185,16 @@ def run_oect_reservoir_autonomously(
         Initial states of the reservoir (drain voltages)
     V1_0 : np.array
         Initial values of V1 for every OECT
-    tmax : float
-        The time over which to predict the dynamical system
-    dt : float > 0
-        The time step to evolve the dynamical system and the OECT RC
     w_in : np.array
         The input layer
     w_out : np.array
         The output layer
     A : np.array
         The effective adjacency matrix
+    tmax : float
+        The time over which to predict the dynamical system
+    dt : float > 0
+        The time step to evolve the dynamical system and the OECT RC
     Vdinit : np.array
         The bias voltage for each OECT
     R : np.array
