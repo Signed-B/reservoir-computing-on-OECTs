@@ -127,7 +127,7 @@ def generate_OECT_parameters(n, parameters):
     Returns
     -------
     tuple
-        Vdinit : np.array
+        Vbias : np.array
             The bias voltage for each OECT
         R : np.array
             The weighting resistor from drain to ground
@@ -174,9 +174,9 @@ def generate_OECT_parameters(n, parameters):
 
     mean = parameters["applied-drain-voltage"]["mean"]
     stddev = parameters["applied-drain-voltage"]["stddev"]
-    Vdinit = gamma_distribution(n, mean, stddev**2)
+    Vbias = gamma_distribution(n, mean, stddev**2)
 
-    return Vdinit, R, Rg, Cg, Vp, Kp, W, L
+    return Vbias, R, Rg, Cg, Vp, Kp, W, L
 
 
 def gamma_distribution(n, mean, variance):

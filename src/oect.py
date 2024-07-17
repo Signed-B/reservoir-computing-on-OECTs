@@ -3,7 +3,7 @@ import numpy as np
 from .utilities import get_output_layer
 
 
-def update_drain_voltage(Vd, Vg, V1, Vdinit, R, Rg, Vp, Kp, W, L):
+def update_drain_voltage(Vd, Vg, V1, Vbias, R, Rg, Vp, Kp, W, L):
     """This function calculates the updated drain voltage.
 
     Updates occur in-place.
@@ -16,7 +16,7 @@ def update_drain_voltage(Vd, Vg, V1, Vdinit, R, Rg, Vp, Kp, W, L):
         The gate voltage of each OECT
     V1 : np.array
         V1 of each OECT
-    Vdinit : np.array
+    Vbias : np.array
         The bias voltage for each OECT
     R : np.array
         The weighting resistor from drain to ground
@@ -35,9 +35,9 @@ def update_drain_voltage(Vd, Vg, V1, Vdinit, R, Rg, Vp, Kp, W, L):
     a = Kp * W * R / L
     b = R / (2 * Rg)
 
-    Vdtemp1 = Vdinit + (a / 2) * (V1 - Vp) ** 2 + b * (Vg - V1)
-    Vdtemp2 = Vdinit + b * (Vg - V1)
-    delta = 2 * a * (Vdinit + b * (Vg - V1)) + (a * (V1 - Vp) - 1) ** 2
+    Vdtemp1 = Vbias + (a / 2) * (V1 - Vp) ** 2 + b * (Vg - V1)
+    Vdtemp2 = Vbias + b * (Vg - V1)
+    delta = 2 * a * (Vbias + b * (Vg - V1)) + (a * (V1 - Vp) - 1) ** 2
     Vdtemp3 = -(1 / a) + (V1 - Vp) + (1 / a) * np.sqrt(np.maximum(delta, np.zeros(n)))
 
     for id in range(n):
@@ -59,7 +59,7 @@ def train_oect_reservoir(
     dt,
     frac,
     alpha,
-    Vdinit,
+    Vbias,
     R,
     Rg,
     Cg,
@@ -88,7 +88,7 @@ def train_oect_reservoir(
         The fraction f to train the reservoir (discarding the beginning of the time series)
     alpha : float
         The ridge regression parameter
-    Vdinit : np.array
+    Vbias : np.array
         The bias voltage for each OECT
     R : np.array
         The weighting resistor from drain to ground
@@ -144,7 +144,7 @@ def train_oect_reservoir(
 
         V1 += dt * (Vg - V1) / (Rg * Cg)
 
-        update_drain_voltage(Vd, Vg, V1, Vdinit, R, Rg, Vp, Kp, W, L)
+        update_drain_voltage(Vd, Vg, V1, Vbias, R, Rg, Vp, Kp, W, L)
         r[t + 1] = Vd
 
         X[t] = u  # store coordinates in X matrix
@@ -164,7 +164,7 @@ def run_oect_reservoir_autonomously(
     A,
     tmax,
     dt,
-    Vdinit,
+    Vbias,
     R,
     Rg,
     Cg,
@@ -195,7 +195,7 @@ def run_oect_reservoir_autonomously(
         The time over which to predict the dynamical system
     dt : float > 0
         The time step to evolve the dynamical system and the OECT RC
-    Vdinit : np.array
+    Vbias : np.array
         The bias voltage for each OECT
     R : np.array
         The weighting resistor from drain to ground
@@ -246,7 +246,7 @@ def run_oect_reservoir_autonomously(
 
         V1 += dt * (Vg - V1) / (Rg * Cg)
 
-        update_drain_voltage(Vd, Vg, V1, Vdinit, R, Rg, Vp, Kp, W, L)
+        update_drain_voltage(Vd, Vg, V1, Vbias, R, Rg, Vp, Kp, W, L)
 
         v = w_out.dot(Vd)  # get output using optimized output matrix w]
 

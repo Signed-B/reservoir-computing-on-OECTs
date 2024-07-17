@@ -34,7 +34,7 @@ def run_OECT_prediction(
     u0 = u0.copy()
 
     # OECT parameters
-    Vdinit, R, Rg, Cg, Vp, Kp, W, L = generate_OECT_parameters(n, parameters)
+    Vbias, R, Rg, Cg, Vp, Kp, W, L = generate_OECT_parameters(n, parameters)
 
     A = erdos_renyi_network(n, p, r_dist)
     while nx.is_connected(nx.Graph(A)):
@@ -51,7 +51,7 @@ def run_OECT_prediction(
             dt,
             frac,
             alpha,
-            Vdinit,
+            Vbias,
             R,
             Rg,
             Cg,
@@ -74,7 +74,7 @@ def run_OECT_prediction(
             A,
             testing_time,
             dt,
-            Vdinit,
+            Vbias,
             R,
             Rg,
             Cg,
