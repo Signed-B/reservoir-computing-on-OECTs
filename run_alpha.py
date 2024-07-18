@@ -34,7 +34,7 @@ def run_OECT_prediction(
     u0 = u0.copy()
 
     # OECT parameters
-    Vdinit, R, Rg, Cg, Vp, Kp, W, L = generate_OECT_parameters(n, parameters)
+    Vbias, R, Rg, Cg, Vp, Kp, W, L = generate_OECT_parameters(n, parameters)
 
     A = erdos_renyi_network(n, p, r_dist)
 
@@ -43,13 +43,13 @@ def run_OECT_prediction(
     try:
         w_out, u0, r0, V1_0 = train_oect_reservoir(
             u0,
+            w_in,
+            A,
             training_time,
             dt,
             frac,
-            w_in,
-            A,
             alpha,
-            Vdinit,
+            Vbias,
             R,
             Rg,
             Cg,
@@ -67,12 +67,12 @@ def run_OECT_prediction(
             u0,
             r0,
             V1_0,
-            testing_time,
-            dt,
             w_in,
             w_out,
             A,
-            Vdinit,
+            testing_time,
+            dt,
+            Vbias,
             R,
             Rg,
             Cg,
@@ -132,14 +132,14 @@ def run_tanh_prediction(
     ## train_reservoir
     w_out, u0, r = train_reservoir(
         u0,
+        w_in,
         A,
         training_time,
         dt,
         frac,
-        w_in,
         alpha,
-        lorenz,
         0,
+        lorenz,
         sigma=sigma,
         rho=rho,
         beta=beta,
@@ -149,13 +149,13 @@ def run_tanh_prediction(
     t, signal, prediction = run_reservoir_autonomously(
         u0,
         r,
+        w_in,
+        w_out,
         A,
         testing_time,
         dt,
-        w_in,
-        w_out,
-        lorenz,
         0,
+        lorenz,
         sigma=sigma,
         rho=rho,
         beta=beta,
