@@ -32,13 +32,13 @@ def update_drain_voltage(Vd, Vg, V1, Vbias, R, Rg, Vp, Kp, W, L):
         The length of the OECT
     """
     n = len(Vg)
-    a = Kp * W * R / L
-    b = R / (2 * Rg)
+    a = R / (2 * Rg)
+    b = Kp * W * R / L
 
-    Vdtemp1 = Vbias + (a / 2) * (V1 - Vp) ** 2 + b * (Vg - V1)
-    Vdtemp2 = Vbias + b * (Vg - V1)
-    delta = 2 * a * (Vbias + b * (Vg - V1)) + (a * (V1 - Vp) - 1) ** 2
-    Vdtemp3 = -(1 / a) + (V1 - Vp) + (1 / a) * np.sqrt(np.maximum(delta, np.zeros(n)))
+    Vdtemp1 = Vdinit + a * (Vg - V1) + (b / 2) * (V1 - Vp) ** 2
+    Vdtemp2 = Vdinit + a * (Vg - V1)
+    delta = 2 * b * (Vdinit + a * (Vg - V1)) + (b * (V1 - Vp) - 1) ** 2
+    Vdtemp3 = -(1 / b) + (V1 - Vp) + (1 / b) * np.sqrt(np.maximum(delta, np.zeros(n)))
 
     for id in range(n):
         if V1[id] - Vd[id] > Vp[id]:
