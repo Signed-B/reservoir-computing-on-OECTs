@@ -5,13 +5,13 @@ from .utilities import get_output_layer
 
 def update_drain_voltage(Vd, Vg, V1, Vdinit, R, Rg, Vp, Kp, W, L):
     n = len(Vg)
-    a = Kp * W * R / L
-    b = R / (2 * Rg)
+    a = R / (2 * Rg)
+    b = Kp * W * R / L
 
-    Vdtemp1 = Vdinit + (a / 2) * (V1 - Vp) ** 2 + b * (Vg - V1)
-    Vdtemp2 = Vdinit + b * (Vg - V1)
-    delta = 2 * a * (Vdinit + b * (Vg - V1)) + (a * (V1 - Vp) - 1) ** 2
-    Vdtemp3 = -(1 / a) + (V1 - Vp) + (1 / a) * np.sqrt(np.maximum(delta, np.zeros(n)))
+    Vdtemp1 = Vdinit + a * (Vg - V1) + (b / 2) * (V1 - Vp) ** 2
+    Vdtemp2 = Vdinit + a * (Vg - V1)
+    delta = 2 * b * (Vdinit + a * (Vg - V1)) + (b * (V1 - Vp) - 1) ** 2
+    Vdtemp3 = -(1 / b) + (V1 - Vp) + (1 / b) * np.sqrt(np.maximum(delta, np.zeros(n)))
 
     for id in range(n):
         if V1[id] - Vd[id] > Vp[id]:
